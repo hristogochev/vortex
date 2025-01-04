@@ -126,7 +126,7 @@ actual interface JavaSerializable
 ### Custom state restoration mechanism
 
 You can create your own state restoration mechanism by inheriting from
-the [NavigatorSaverProvider](https://github.com/hristogochev/vortex/blob/main/vortex/src/commonMain/kotlin/io/github/hristogochev/vortex/navigator/NavigatorSaverProvider.kt)
+the [NavigatorSaverProvider](https://github.com/hristogochev/vortex/blob/main/vortex/src/commonMain/kotlin/io/github/hristogochev/vortex/navigator/saver/NavigatorSaverProvider.kt)
 interface into a data object.
 
 Keep in mind that a `Navigator` needs it's `key`, `screens` and `screenStateKeys` upon restoration.
@@ -134,76 +134,19 @@ Keep in mind that a `Navigator` needs it's `key`, `screens` and `screenStateKeys
 You also need to pass it it's `parent` reference, which is conveniently accessible to you upon
 implementing the interface.
 
-Here’s an example of implementing a navigator saver provider, based on [kevinvanmierlo's solution](https://github.com/hristogochev/vortex/issues/1) for restoring screens with non-serializable parameters and properties (with the drawback that process death on Android stops being supported):
+You can find an example of implementing a custom navigator saver provider [here](https://github.com/hristogochev/vortex/blob/main/vortex/src/commonMain/kotlin/io/github/hristogochev/vortex/navigator/saver/NavigatorSaverProviderNonSerializable.kt).
+This example custom navigator saver provider is based on [kevinvanmierlo's solution](https://github.com/hristogochev/vortex/issues/1) for restoring screens with non-serializable parameters and properties (with the drawback that process death on Android stops being supported).
+
+Once you have implemented your custom navigator saver provider you can apply it like this:
 ```kotlin
 @Composable
 fun App() {
     // This is at the top of our root navigator,
     // but you can also have different navigator saver providers for each Navigator
     CompositionLocalProvider(
-        LocalNavigatorSaverProvider provides ExternalNavigatorSaverProvider,
+        LocalNavigatorSaverProvider provides CustomNavigatorSaverProvider,
     ) {
         Navigator(HomeScreen)
-    }
-}
-
-object NavigatorsStore {
-    // A mutable map of navigators, that takes the navigators' keys as keys,
-    // and their screens and screenStateKeys as values
-    val navigators: MutableMap<String, Map<String, Any>> = mutableMapOf()
-}
-
-data object ExternalNavigatorSaverProvider : NavigatorSaverProvider<String> {
-    override fun provide(parent: Navigator?): Saver<Navigator, String> {
-        return Saver(
-            save = { navigator ->
-                // We need to use `.toList()` to create a copy of the items and screen state keys,
-                // otherwise their references will be used, which will not work
-                val contentsMap = mapOf(
-                    "items" to navigator.items.toList(),
-                    "screenStateKeys" to navigator.getAllScreenStateKeys().toList()
-                )
-                
-                // Save the current navigator contents into an outside map, using its key
-                NavigatorsStore.navigators[navigator.key] = contentsMap
-                
-                // Only tell our saver about the navigator's key, since we manage the saving externally
-                navigator.key
-            },
-            restore = restore@{ key ->
-                // If there are no saved contents for the navigator by it's key,
-                // forget the current saved one and recreate the navigator
-                val navigatorContents = NavigatorsStore.navigators[key] ?: return@restore null
-
-                // If any of the core components of a navigator are missing,
-                // forget the current saved one and recreate the navigator
-                @Suppress("UNCHECKED_CAST")
-                val savedScreens =
-                    navigatorContents["items"] as? List<Screen> ?: run {
-                        NavigatorsStore.navigators.remove(key)
-                        return@restore null
-                    }
-
-                @Suppress("UNCHECKED_CAST")
-                val savedScreenStateKeys =
-                    navigatorContents["screenStateKeys"] as? List<String> ?: run {
-                        NavigatorsStore.navigators.remove(key)
-                        return@restore null
-                    }
-
-                Navigator(
-                    initialScreens = savedScreens,
-                    key = key,
-                    parent = parent,
-                    screenStateKeys = ThreadSafeSet(savedScreenStateKeys)
-                )
-            }
-        )
-    }
-
-    override fun dispose(navigator: Navigator) {
-        // When a navigator is disposed make sure to clean up the NavigatorsStore
-        NavigatorsStore.navigators.remove(navigator.key)
     }
 }
 ```

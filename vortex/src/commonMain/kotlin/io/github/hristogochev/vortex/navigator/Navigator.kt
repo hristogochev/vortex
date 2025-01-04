@@ -11,6 +11,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.staticCompositionLocalOf
 import io.github.hristogochev.vortex.model.ScreenModelStore
+import io.github.hristogochev.vortex.navigator.saver.LocalNavigatorSaverProvider
 import io.github.hristogochev.vortex.screen.CurrentScreen
 import io.github.hristogochev.vortex.screen.Screen
 import io.github.hristogochev.vortex.screen.ScreenDisposableEffect
@@ -22,11 +23,9 @@ import io.github.hristogochev.vortex.util.ThreadSafeSet
 import io.github.hristogochev.vortex.util.randomUuid
 
 
-internal val LocalNavigatorStateHolder: ProvidableCompositionLocal<SaveableStateHolder?> =
+public val LocalNavigatorStateHolder: ProvidableCompositionLocal<SaveableStateHolder?> =
     staticCompositionLocalOf { null }
 
-public val LocalNavigatorSaverProvider: ProvidableCompositionLocal<NavigatorSaverProvider<*>> =
-    staticCompositionLocalOf { SerializableNavigatorSaverProvider }
 
 @Composable
 private fun LocalNavigatorStateHolderProvider(content: @Composable () -> Unit) {
@@ -85,14 +84,12 @@ public fun Navigator(
 
         val navigatorSaverProvider = LocalNavigatorSaverProvider.current
 
-        val navigatorSaver = remember(navigatorSaverProvider) {
+        val navigatorSaver = remember(navigatorSaverProvider, parentUpdatedState) {
             navigatorSaverProvider.provide(parentUpdatedState)
         }
 
-        val navigatorSaverProviderDispose = navigatorSaverProvider::dispose
-        val navigatorSaverProviderDisposeUpdatedState by rememberUpdatedState(
-            navigatorSaverProviderDispose
-        )
+        val navigatorSaverDispose = navigatorSaver::dispose
+        val navigatorSaverDisposeUpdatedState by rememberUpdatedState(navigatorSaverDispose)
 
         val navigator = rememberSaveable(saver = navigatorSaver) {
             val key = randomUuid()
@@ -104,7 +101,11 @@ public fun Navigator(
         val localScreenStateKey = LocalScreenStateKey.current
 
         if (localScreenStateKey != null) {
-            ScreenDisposableEffect(navigatorUpdatedState, disposeOnKeysChange = false) {
+            ScreenDisposableEffect(
+                navigatorUpdatedState,
+                navigatorSaverDisposeUpdatedState,
+                disposeOnKeysChange = false
+            ) {
                 onDispose {
                     val screenStateKeys = navigatorUpdatedState.getAllScreenStateKeys()
 
@@ -122,7 +123,7 @@ public fun Navigator(
 
                     navigatorUpdatedState.clearEvent()
 
-                    navigatorSaverProviderDisposeUpdatedState(navigatorUpdatedState)
+                    navigatorSaverDisposeUpdatedState(navigatorUpdatedState)
                 }
             }
         }
@@ -146,7 +147,7 @@ public fun Navigator(
 
                     navigatorUpdatedState.clearEvent()
 
-                    navigatorSaverProviderDisposeUpdatedState(navigatorUpdatedState)
+                    navigatorSaverDisposeUpdatedState(navigatorUpdatedState)
                 }
             }
         }
