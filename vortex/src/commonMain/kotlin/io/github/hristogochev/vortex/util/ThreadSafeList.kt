@@ -1,11 +1,11 @@
 package io.github.hristogochev.vortex.util
 
-internal interface ThreadSafeList<T> : MutableList<T> {
-    companion object {
-        operator fun <T> invoke(): ThreadSafeList<T> {
+public interface ThreadSafeList<T> : MutableList<T> {
+    public companion object {
+        public operator fun <T> invoke(): ThreadSafeList<T> {
             return getThreadSafeList()
         }
     }
 }
 
-internal expect fun <T> getThreadSafeList(): ThreadSafeList<T>
+public expect fun <T> getThreadSafeList(): ThreadSafeList<T>

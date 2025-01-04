@@ -1,9 +1,9 @@
 package io.github.hristogochev.vortex.util
 
-internal interface ThreadSafeSet<T> : MutableSet<T> {
-    companion object {
+public interface ThreadSafeSet<T> : MutableSet<T> {
+    public companion object {
 
-        operator fun <T> invoke(initial: Collection<T>): ThreadSafeSet<T> {
+        public operator fun <T> invoke(initial: Collection<T>): ThreadSafeSet<T> {
             return getThreadSafeSet<T>().apply {
                 if (initial.isNotEmpty()) addAll(initial)
             }
@@ -11,4 +11,4 @@ internal interface ThreadSafeSet<T> : MutableSet<T> {
     }
 }
 
-internal expect fun <T> getThreadSafeSet(): ThreadSafeSet<T>
+public expect fun <T> getThreadSafeSet(): ThreadSafeSet<T>

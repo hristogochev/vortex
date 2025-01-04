@@ -3,7 +3,7 @@ package io.github.hristogochev.vortex.util
 import kotlinx.atomicfu.locks.SynchronizedObject
 import kotlinx.atomicfu.locks.synchronized
 
-internal open class ThreadSafeMutableIterator<E>(
+public open class ThreadSafeMutableIterator<E>(
     private val syncObject: SynchronizedObject,
     private val delegate: MutableIterator<E>
 ) : MutableIterator<E> {
@@ -16,7 +16,7 @@ internal open class ThreadSafeMutableIterator<E>(
     }
 }
 
-internal class ThreadSafeMutableListIterator<E>(
+public class ThreadSafeMutableListIterator<E>(
     private val syncObject: SynchronizedObject,
     private val delegate: MutableListIterator<E>
 ) : ThreadSafeMutableIterator<E>(syncObject, delegate),

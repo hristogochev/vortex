@@ -3,7 +3,7 @@ package io.github.hristogochev.vortex.util
 import kotlinx.atomicfu.locks.SynchronizedObject
 import kotlinx.atomicfu.locks.synchronized
 
-public open class ThreadSafeMutableCollection<T>internal constructor(
+public open class ThreadSafeMutableCollection<T> public constructor(
     private val syncObject: SynchronizedObject,
     private val delegate: MutableCollection<T>
 ) : MutableCollection<T> {

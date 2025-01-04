@@ -7,11 +7,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.SaveableStateHolder
-import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.staticCompositionLocalOf
 import io.github.hristogochev.vortex.model.ScreenModelStore
+import io.github.hristogochev.vortex.navigator.saver.LocalNavigatorSaverProvider
 import io.github.hristogochev.vortex.screen.CurrentScreen
 import io.github.hristogochev.vortex.screen.Screen
 import io.github.hristogochev.vortex.screen.ScreenDisposableEffect
@@ -23,8 +23,9 @@ import io.github.hristogochev.vortex.util.ThreadSafeSet
 import io.github.hristogochev.vortex.util.randomUuid
 
 
-internal val LocalNavigatorStateHolder: ProvidableCompositionLocal<SaveableStateHolder?> =
+public val LocalNavigatorStateHolder: ProvidableCompositionLocal<SaveableStateHolder?> =
     staticCompositionLocalOf { null }
+
 
 @Composable
 private fun LocalNavigatorStateHolderProvider(content: @Composable () -> Unit) {
@@ -81,34 +82,14 @@ public fun Navigator(
         val stateHolder =
             LocalNavigatorStateHolder.current ?: error("LocalNavigatorStateHolder not initialized")
 
-        val navigatorSaver: Saver<Navigator, Map<String, Any?>> = remember {
-            Saver(
-                save = { navigator ->
-                    mapOf(
-                        "key" to navigator.key,
-                        "items" to navigator.items.toList(),
-                        "screenStateKeys" to navigator.getAllScreenStateKeys().toList()
-                    )
-                },
-                restore = { saved ->
-                    val savedKey = saved["key"] as? String ?: error("No saved navigator")
+        val navigatorSaverProvider = LocalNavigatorSaverProvider.current
 
-                    @Suppress("UNCHECKED_CAST")
-                    val savedScreens =
-                        saved["items"] as? List<Screen> ?: error("No saved navigator")
-
-                    @Suppress("UNCHECKED_CAST")
-                    val savedScreenStateKeys =
-                        saved["screenStateKeys"] as? List<String> ?: error("No saved navigator")
-                    Navigator(
-                        savedScreens,
-                        savedKey,
-                        parentUpdatedState,
-                        screenStateKeys = ThreadSafeSet(savedScreenStateKeys)
-                    )
-                }
-            )
+        val navigatorSaver = remember(navigatorSaverProvider, parentUpdatedState) {
+            navigatorSaverProvider.provide(parentUpdatedState)
         }
+
+        val navigatorSaverDispose = navigatorSaver::dispose
+        val navigatorSaverDisposeUpdatedState by rememberUpdatedState(navigatorSaverDispose)
 
         val navigator = rememberSaveable(saver = navigatorSaver) {
             val key = randomUuid()
@@ -120,7 +101,11 @@ public fun Navigator(
         val localScreenStateKey = LocalScreenStateKey.current
 
         if (localScreenStateKey != null) {
-            ScreenDisposableEffect(navigatorUpdatedState, disposeOnKeysChange = false) {
+            ScreenDisposableEffect(
+                navigatorUpdatedState,
+                navigatorSaverDisposeUpdatedState,
+                disposeOnKeysChange = false
+            ) {
                 onDispose {
                     val screenStateKeys = navigatorUpdatedState.getAllScreenStateKeys()
 
@@ -137,6 +122,8 @@ public fun Navigator(
                     ScreenModelStore.dispose(navigatorUpdatedState.key)
 
                     navigatorUpdatedState.clearEvent()
+
+                    navigatorSaverDisposeUpdatedState(navigatorUpdatedState)
                 }
             }
         }
@@ -159,6 +146,8 @@ public fun Navigator(
                     ScreenModelStore.dispose(navigatorUpdatedState.key)
 
                     navigatorUpdatedState.clearEvent()
+
+                    navigatorSaverDisposeUpdatedState(navigatorUpdatedState)
                 }
             }
         }
@@ -175,7 +164,7 @@ public fun Navigator(
     }
 }
 
-public class Navigator internal constructor(
+public class Navigator(
     initialScreens: List<Screen>,
     public val key: String,
     public val parent: Navigator? = null,

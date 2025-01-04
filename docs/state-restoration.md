@@ -1,11 +1,15 @@
 # State restoration
 
-Every instance of `Screen` is expected to be savable in
-a [Bundle](https://developer.android.com/guide/components/activities/parcelables-and-bundles), therefore all params and
-properties of your `Screen` implementations should be either `Java Serializable` or `Parcelable`. Otherwise, your app
+The default state restoration mechanism of Vortex requires every instance of `Screen` to be savable
+in
+a [Bundle](https://developer.android.com/guide/components/activities/parcelables-and-bundles),
+therefore all params and
+properties of your `Screen` implementations should be either `Java Serializable` or `Parcelable`.
+Otherwise, your app
 will crash upon attempting to restore its state.
 
-Keep in mind that `Parcelables` are not `Java Serializable` by default and `Java Serializables` are not `Parcelable` by
+Keep in mind that `Parcelables` are not `Java Serializable` by default and `Java Serializables` are
+not `Parcelable` by
 default.
 
 ### Java Serializable
@@ -21,10 +25,10 @@ data class ValidScreen(
 
     // Serializable properties
     val tag = "ValidScreen"
-    
+
     // Lazily initialized serializable types
     val randomId by lazy { UUID.randomUUID() }
-    
+
     // ...
 }
 
@@ -39,7 +43,7 @@ data class InvalidScreen(
 
     // Non-serializable properties
     val postService = PostService()
-    
+
     // ...
 }
 ```
@@ -73,7 +77,8 @@ data class InvalidScreen(
 
 #### Enforcing Android Parcelable on your screens
 
-You can build your own Screen type for enforcing in at compile time that all yours screens should be Parcelable by
+You can build your own Screen type for enforcing in at compile time that all yours screens should be
+Parcelable by
 creating an interface that implement Parcelable.
 
 ```kotlin
@@ -103,7 +108,8 @@ data class ValidScreen(
 
 ### Multiplatform state restoration
 
-When working in a Multiplatform project you may need a common `Java Serializable` or `Parcelable` interface/annotation,
+When working in a Multiplatform project you may need a common `Java Serializable` or `Parcelable`
+interface/annotation,
 you can create one like this:
 
 ```kotlin
@@ -117,6 +123,33 @@ actual typealias JavaSerializable = java.io.Serializable
 actual interface JavaSerializable
 ```
 
+### Custom state restoration mechanism
+
+You can create your own state restoration mechanism by inheriting from
+the [NavigatorSaverProvider](https://github.com/hristogochev/vortex/blob/main/vortex/src/commonMain/kotlin/io/github/hristogochev/vortex/navigator/saver/NavigatorSaverProvider.kt)
+interface into a data object.
+
+Keep in mind that a `Navigator` needs it's `key`, `screens` and `screenStateKeys` upon restoration.
+
+You also need to pass it it's `parent` reference, which is conveniently accessible to you upon
+implementing the interface.
+
+You can find an example of implementing a custom navigator saver provider [here](https://github.com/hristogochev/vortex/blob/main/vortex/src/commonMain/kotlin/io/github/hristogochev/vortex/navigator/saver/NavigatorSaverProviderNonSerializable.kt).
+This example custom navigator saver provider is based on [kevinvanmierlo's solution](https://github.com/hristogochev/vortex/issues/1) for restoring screens with non-serializable parameters and properties (with the drawback that process death on Android stops being supported).
+
+Once you have implemented your custom navigator saver provider you can apply it like this:
+```kotlin
+@Composable
+fun App() {
+    // This is at the top of our root navigator,
+    // but you can also have different navigator saver providers for each Navigator
+    CompositionLocalProvider(
+        LocalNavigatorSaverProvider provides CustomNavigatorSaverProvider,
+    ) {
+        Navigator(HomeScreen)
+    }
+}
+```
 
 ### Identifying screens
 
@@ -142,7 +175,28 @@ override val key = uniqueScreenKey()
 ```
 
 !!! warning
-    You should **always** set your own key, if the screen is used multiple times in the same `Navigator`, or is an [anonymous](https://kotlinlang.org/docs/object-declarations.html#object-expressions) or [local](https://kotlinlang.org/spec/declarations.html#local-class-declaration) class.
+    You should **always** set your own key, if the screen is used multiple times in the same
+    `Navigator`, or is
+    an [anonymous](https://kotlinlang.org/docs/object-declarations.html#object-expressions)
+    or [local](https://kotlinlang.org/spec/declarations.html#local-class-declaration) class.
 
+### Ignoring process death on Android
+
+If you don't wish to support process death restoration on Android, you can add this to your Activity:
+```kotlin
+override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+
+    if (savedInstanceState != null) {
+        val intent = Intent(this, MainActivity::class.java)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        startActivity(intent)
+        finish()
+        return
+    }
+    
+    // ...
+}
+```
 
 

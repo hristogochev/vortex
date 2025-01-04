@@ -4,14 +4,14 @@ import kotlinx.atomicfu.locks.SynchronizedObject
 import kotlinx.atomicfu.locks.synchronized
 
 
-internal actual fun <K, V> getThreadSafeMap(): ThreadSafeMap<K, V> {
+public actual fun <K, V> getThreadSafeMap(): ThreadSafeMap<K, V> {
     return NativeThreadSafeMap()
 }
 
-internal class NativeThreadSafeMap<K, V>(
+public class NativeThreadSafeMap<K, V>(
     private val delegate: MutableMap<K, V>,
 ) : MutableMap<K, V>, ThreadSafeMap<K, V> {
-    constructor() : this(delegate = mutableMapOf())
+    public constructor() : this(delegate = mutableMapOf())
 
     private val syncObject = SynchronizedObject()
 

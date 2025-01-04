@@ -3,19 +3,19 @@ package io.github.hristogochev.vortex.util
 import kotlinx.atomicfu.locks.SynchronizedObject
 import kotlinx.atomicfu.locks.synchronized
 
-internal actual fun <T> getThreadSafeList(): ThreadSafeList<T> {
+public actual fun <T> getThreadSafeList(): ThreadSafeList<T> {
     return NativeThreadSafeList()
 }
 
-internal class NativeThreadSafeList<T> internal constructor(
+public class NativeThreadSafeList<T> public constructor(
     private val syncObject: SynchronizedObject,
     private val delegate: MutableList<T>,
 ) : ThreadSafeList<T>, MutableList<T>, ThreadSafeMutableCollection<T>(syncObject, delegate) {
-    constructor() : this(delegate = mutableListOf())
-    constructor(delegate: MutableList<T>) : this(SynchronizedObject(), delegate)
+    public constructor() : this(delegate = mutableListOf())
+    public constructor(delegate: MutableList<T>) : this(SynchronizedObject(), delegate)
 
     override fun get(index: Int): T {
-        return synchronized(syncObject) { delegate.get(index) }
+        return synchronized(syncObject) { delegate[index] }
     }
 
     override fun indexOf(element: T): Int {

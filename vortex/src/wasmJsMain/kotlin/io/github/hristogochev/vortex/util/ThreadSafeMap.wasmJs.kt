@@ -3,14 +3,14 @@ package io.github.hristogochev.vortex.util
 import kotlinx.atomicfu.locks.SynchronizedObject
 import kotlinx.atomicfu.locks.synchronized
 
-internal actual fun <K, V> getThreadSafeMap(): ThreadSafeMap<K, V> {
+public actual fun <K, V> getThreadSafeMap(): ThreadSafeMap<K, V> {
     return WasmThreadSafeMap()
 }
 
-internal class WasmThreadSafeMap<K, V>(
+public class WasmThreadSafeMap<K, V>(
     private val delegate: MutableMap<K, V>,
 ) : ThreadSafeMap<K, V>, MutableMap<K, V> {
-    constructor() : this(delegate = mutableMapOf())
+    public constructor() : this(delegate = mutableMapOf())
 
     private val syncObject = SynchronizedObject()
 

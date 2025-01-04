@@ -9,10 +9,6 @@ You can find community solutions from Voyager in issue [#144](https://github.com
 You can find community solutions from Voyager in issue [#144](https://github.com/adrielcafe/voyager/issues/144)
 and [#223](https://github.com/adrielcafe/voyager/issues/223).
 
-### Result passing between screens
-
-Coming very soon
-
 ### Deep linking:
 
 Best applied using community solutions:
