@@ -167,7 +167,7 @@ public class SnapshotStateStack<Item>(
 
     public override fun pop(): Boolean =
         if (canPop) {
-            stateStack.removeLast()
+            stateStack.removeLastSafe()
             lastEvent = StackEvent.Pop
             true
         } else {
@@ -189,7 +189,7 @@ public class SnapshotStateStack<Item>(
         }
 
         while (canPop && shouldPop()) {
-            stateStack.removeLast()
+            stateStack.removeLastSafe()
         }
 
         lastEvent = StackEvent.Pop
@@ -199,7 +199,7 @@ public class SnapshotStateStack<Item>(
 
     public override fun popGesture(): Boolean {
         return if (canPop) {
-            stateStack.removeLast()
+            stateStack.removeLastSafe()
             lastEvent = StackEvent.PopGesture
             true
         } else {
@@ -222,7 +222,7 @@ public class SnapshotStateStack<Item>(
         }
 
         while (canPop && shouldPop()) {
-            stateStack.removeLast()
+            stateStack.removeLastSafe()
         }
 
         lastEvent = StackEvent.PopGesture
@@ -243,3 +243,5 @@ public class SnapshotStateStack<Item>(
         lastEvent = StackEvent.Idle
     }
 }
+
+private fun <T> SnapshotStateList<T>.removeLastSafe(): T = if (isEmpty()) throw NoSuchElementException("List is empty.") else removeAt(lastIndex)
