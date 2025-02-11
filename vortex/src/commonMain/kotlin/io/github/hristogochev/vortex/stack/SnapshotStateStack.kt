@@ -197,6 +197,40 @@ public class SnapshotStateStack<Item>(
         return success
     }
 
+    public override fun popGesture(): Boolean {
+        return if (canPop) {
+            stateStack.removeLast()
+            lastEvent = StackEvent.PopGesture
+            true
+        } else {
+            false
+        }
+    }
+
+    public override fun popGestureAll() {
+        popUntil { false }
+    }
+
+    public override infix fun popGestureUntil(predicate: (Item) -> Boolean): Boolean {
+        var success = false
+        val shouldPop = {
+            lastItemOrNull
+                ?.let(predicate)
+                ?.also { success = it }
+                ?.not()
+                ?: false
+        }
+
+        while (canPop && shouldPop()) {
+            stateStack.removeLast()
+        }
+
+        lastEvent = StackEvent.PopGesture
+
+        return success
+    }
+
+
     public override operator fun plusAssign(item: Item) {
         push(item)
     }

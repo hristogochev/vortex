@@ -7,11 +7,12 @@ public enum class StackEvent {
     Push,
     Replace,
     Pop,
+    PopGesture,
     Idle
 }
 
 public fun StackEvent.isDisposableEvent(): Boolean =
-    this == StackEvent.Pop || this == StackEvent.Replace
+    this == StackEvent.Pop || this == StackEvent.Replace || this == StackEvent.PopGesture
 
 public interface Stack<Item> {
 
@@ -52,6 +53,12 @@ public interface Stack<Item> {
     public fun popAll()
 
     public infix fun popUntil(predicate: (Item) -> Boolean): Boolean
+
+    public fun popGesture(): Boolean
+
+    public fun popGestureAll()
+
+    public infix fun popGestureUntil(predicate: (Item) -> Boolean): Boolean
 
     public operator fun plusAssign(item: Item)
 
