@@ -10,6 +10,6 @@ plugins {
 
 allprojects {
     group = "io.github.hristogochev"
-    version = "0.2.2"
+    version = "0.2.3"
 }
 
