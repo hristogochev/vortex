@@ -73,6 +73,23 @@ data class DetailsScreen(val id: Long, override val onAppearTransition: ScreenTr
 }
 ```
 
+### iOS swipe transition
+
+Vortex provides an experimental iOS-swipe back transition.
+
+This solution is inspired by the ideas of multiple people in issue [#144](https://github.com/adrielcafe/voyager/issues/144) of Voyager.
+
+The transition does not take in account the overrides set for screens in the current navigator.
+
+```kotlin hl_lines="4"
+@Composable
+fun App(){
+    Navigator(HomeScreen) { navigator ->
+        CurrentScreenIOSSwipe(navigator)
+    }
+}
+```
+
 ### Custom transitions
 
 You can create your own transitions by implementing the `ScreenTransition` interface.

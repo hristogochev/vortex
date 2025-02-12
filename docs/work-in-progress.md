@@ -2,7 +2,9 @@
 
 ### iOS Swipe Back
 
-You can find community solutions from Voyager in issue [#144](https://github.com/adrielcafe/voyager/issues/144).
+Currently, Vortex provides an experimental [iOS-swipe back](transitions.md#ios-swipe-transition) mechanism, that mimics the original iOS-swipe back mechanism.
+
+You can also find community solutions from Voyager in issue [#144](https://github.com/adrielcafe/voyager/issues/144).
 
 ### Predictive back animation
 

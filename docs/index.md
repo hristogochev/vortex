@@ -55,6 +55,7 @@ fun App() {
 * **Navigator Default Transitions**:<br>You can specify default navigator overridable screen appear and disappear transitions.
 * **Runtime Appear Transition**:<br>You can specify the appear transition for a screen at runtime.  
 * **Runtime Disappear Transition**:<br>You can specify the disappear transition for a screen at runtime.
+* **Experimental iOS-swipe Transition**:<br>An iOS-swipe back transition that allows swiping to go back.
 
 ##### Lifecycle
 * **Screen Disposable Effect**:<br>A new screen disposable effect is available, tied to the lifecycle of the screen.
