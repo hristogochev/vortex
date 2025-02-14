@@ -41,7 +41,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import io.github.hristogochev.vortex.annotation.ExperimentalVortexApi
 import io.github.hristogochev.vortex.navigator.Navigator
 import io.github.hristogochev.vortex.stack.StackEvent
 import kotlinx.coroutines.flow.first
@@ -54,7 +53,6 @@ import kotlin.math.roundToInt
  *
  *  Ignores the override transitions for all screens rendered.
  */
-@ExperimentalVortexApi
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 public fun CurrentScreenIOSSwipe(
@@ -133,15 +131,10 @@ public fun CurrentScreenIOSSwipe(
         var autoSwipe by remember { mutableStateOf(false) }
 
         val offset = anchoredDraggableState.offset
-        val offsetUpdated by rememberUpdatedState(offset)
-
-        val targetState by rememberUpdatedState(anchoredDraggableState.targetValue)
-
-        var lastShouldHaveBeen by remember { mutableStateOf<List<Screen>>(emptyList()) }
 
         LaunchedEffect(last2NavigatorItems) {
             when (lastEventUpdated) {
-                StackEvent.Push, StackEvent.Replace -> {
+                StackEvent.Push, StackEvent.Replace-> {
                     autoSwipe = true
 
                     if (screens.size == 2) {
@@ -150,41 +143,33 @@ public fun CurrentScreenIOSSwipe(
 
                     anchoredDraggableState.snapTo(DismissValue.End)
 
-                    syncScreens(last2NavigatorItems, screens)
+                    val last2 = listOf(screens.last(), last2NavigatorItems.last())
+
+                    syncScreens(last2, screens)
 
                     snapshotFlow { autoSwipe }
                         .first { !autoSwipe }
 
                     anchoredDraggableState.animateTo(DismissValue.Start)
+
+                    syncScreens(last2NavigatorItems, screens)
                 }
 
                 StackEvent.Pop -> {
-                    if (autoSwipe) {
-                        if (targetState == DismissValue.End && lastShouldHaveBeen.isNotEmpty()) {
-                            anchoredDraggableState.snapTo(DismissValue.End)
-
-                            snapshotFlow { autoSwipe }
-                                .first { !autoSwipe }
-
-                            syncScreens(lastShouldHaveBeen, screens)
-                            lastShouldHaveBeen = emptyList()
-
-                            anchoredDraggableState.snapTo(DismissValue.Start)
-                        }
-                    }
-
                     autoSwipe = true
 
-                    lastShouldHaveBeen = last2NavigatorItems
+                    val last2 = listOf(last2NavigatorItems.last(), screens.last())
+
+                    syncScreens(last2, screens)
 
                     anchoredDraggableState.animateTo(DismissValue.End)
-
-                    syncScreens(last2NavigatorItems, screens)
 
                     snapshotFlow { autoSwipe }
                         .first { !autoSwipe }
 
                     anchoredDraggableState.snapTo(DismissValue.Start)
+
+                    syncScreens(last2NavigatorItems, screens)
                 }
 
                 StackEvent.PopGesture -> {
@@ -199,7 +184,6 @@ public fun CurrentScreenIOSSwipe(
         }
 
         LaunchedEffect(offset) {
-
             if (offset == maxWidthPxUpdated && screens.size > 1) {
                 if (autoSwipe) {
                     autoSwipe = false
