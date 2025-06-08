@@ -40,7 +40,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -69,8 +68,6 @@ public fun CurrentScreenIOSSwipe(
 
     CurrentScreenNoTransitionsDisposable(navigator)
 
-    val density = LocalDensity.current
-
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val maxWidthPx = constraints.maxWidth.toFloat()
         val maxWidthPxUpdated by rememberUpdatedState(maxWidthPx)
@@ -84,28 +81,10 @@ public fun CurrentScreenIOSSwipe(
             }
         }
 
-        val smallThreshold = with(density) { 10.dp.toPx() }
-
-        val offsetHistory = remember { mutableListOf<Float>() }
-
         val anchoredDraggableState = remember {
             AnchoredDraggableState(
                 initialValue = DismissValue.Start,
-                anchors = anchors,
-                confirmValueChange = {
-                    when (it) {
-                        DismissValue.Start -> true
-                        DismissValue.End -> run {
-                            val last = offsetHistory.lastOrNull() ?: return@run true
-                            if (offsetHistory.size < 2) {
-                                return@run true
-                            }
-                            val secondToLast = offsetHistory[offsetHistory.size - 2]
-                            offsetHistory.clear()
-                            last + smallThreshold > secondToLast
-                        }
-                    }
-                }
+                anchors = anchors
             )
         }
 
