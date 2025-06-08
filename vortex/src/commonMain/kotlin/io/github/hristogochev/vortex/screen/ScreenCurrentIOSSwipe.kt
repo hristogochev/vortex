@@ -1,16 +1,20 @@
 package io.github.hristogochev.vortex.screen
 
+import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.DecayAnimationSpec
 import androidx.compose.animation.core.Spring.StiffnessLow
 import androidx.compose.animation.core.SpringSpec
 import androidx.compose.animation.core.exponentialDecay
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.AnchoredDraggableState
 import androidx.compose.foundation.gestures.DraggableAnchors
 import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.TargetedFlingBehavior
 import androidx.compose.foundation.gestures.anchoredDraggable
 import androidx.compose.foundation.gestures.animateTo
 import androidx.compose.foundation.gestures.snapTo
+import androidx.compose.foundation.gestures.snapping.SnapLayoutInfoProvider
+import androidx.compose.foundation.gestures.snapping.snapFlingBehavior
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -44,6 +48,7 @@ import androidx.compose.ui.zIndex
 import io.github.hristogochev.vortex.navigator.Navigator
 import io.github.hristogochev.vortex.stack.StackEvent
 import kotlinx.coroutines.flow.first
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /**
@@ -53,7 +58,6 @@ import kotlin.math.roundToInt
  *
  *  Ignores the override transitions for all screens rendered.
  */
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 public fun CurrentScreenIOSSwipe(
     navigator: Navigator,
@@ -88,10 +92,6 @@ public fun CurrentScreenIOSSwipe(
             AnchoredDraggableState(
                 initialValue = DismissValue.Start,
                 anchors = anchors,
-                positionalThreshold = { distance -> distance * 0.4f }, // Threshold for snapping
-                velocityThreshold = { maxWidthPxUpdated / 3 }, // Minimum velocity to
-                snapAnimationSpec = SpringSpec(stiffness = StiffnessLow),
-                decayAnimationSpec = exponentialDecay(),
                 confirmValueChange = {
                     when (it) {
                         DismissValue.Start -> true
@@ -108,6 +108,15 @@ public fun CurrentScreenIOSSwipe(
                 }
             )
         }
+
+
+        val flingBehavior = iosFlingBehavior(
+            state = anchoredDraggableState,
+            positionalThreshold = { distance -> distance * 0.4f }, // Threshold for snapping
+            velocityThreshold = { maxWidthPxUpdated / 3 }, // Minimum velocity to
+            snapAnimationSpec = SpringSpec(stiffness = StiffnessLow),
+            decayAnimationSpec = exponentialDecay(),
+        )
 
         LaunchedEffect(anchors) {
             anchoredDraggableState.updateAnchors(anchors)
@@ -134,7 +143,7 @@ public fun CurrentScreenIOSSwipe(
 
         LaunchedEffect(last2NavigatorItems) {
             when (lastEventUpdated) {
-                StackEvent.Push, StackEvent.Replace-> {
+                StackEvent.Push, StackEvent.Replace -> {
                     autoSwipe = true
 
                     if (screens.size == 2) {
@@ -150,7 +159,10 @@ public fun CurrentScreenIOSSwipe(
                     snapshotFlow { autoSwipe }
                         .first { !autoSwipe }
 
-                    anchoredDraggableState.animateTo(DismissValue.Start)
+                    anchoredDraggableState.animateTo(
+                        DismissValue.Start,
+                        SpringSpec(stiffness = StiffnessLow)
+                    )
 
                     syncScreens(last2NavigatorItems, screens)
                 }
@@ -162,7 +174,10 @@ public fun CurrentScreenIOSSwipe(
 
                     syncScreens(last2, screens)
 
-                    anchoredDraggableState.animateTo(DismissValue.End)
+                    anchoredDraggableState.animateTo(
+                        DismissValue.End,
+                        SpringSpec(stiffness = StiffnessLow)
+                    )
 
                     snapshotFlow { autoSwipe }
                         .first { !autoSwipe }
@@ -184,14 +199,22 @@ public fun CurrentScreenIOSSwipe(
         }
 
         LaunchedEffect(offset) {
-            if (offset == maxWidthPxUpdated && screens.size > 1) {
-                if (autoSwipe) {
-                    autoSwipe = false
-                } else {
-                    navigator.popGesture()
-                }
+            // Only 1 screen, no popping, no nothing
+            if (screens.size == 1) return@LaunchedEffect
+
+            // Offset is not at the end, no popping, no nothing
+            if (offset != maxWidthPxUpdated) return@LaunchedEffect
+
+            // There are 2 screens and the offset reached the end
+
+            // The offset was reached by a button click, therefore the button click took care of the popping
+            if (autoSwipe) {
+                autoSwipe = false
                 return@LaunchedEffect
             }
+
+            // The offset was reached manually (by swiping), trigger pop gesture as to not trigger normal pop events
+            navigator.popGesture()
         }
 
         Box(
@@ -200,81 +223,58 @@ public fun CurrentScreenIOSSwipe(
         ) {
             screens.forEachIndexed { index, screen ->
 
-                val offsetModifier = when (screens.size) {
-                    1 -> {
-                        Modifier
-                    }
-
-                    2 -> {
-                        if (index == 1) {
-                            Modifier.offset { IntOffset(offset.roundToInt(), 0) }
-                        } else {
-                            Modifier
-                                .offset {
-                                    val offsetX =
-                                        calculatePreviousScreenOffset(offset, maxWidthPxUpdated)
-                                    IntOffset(offsetX.roundToInt(), 0)
-                                }
-                                .drawWithContent {
-                                    // Draw the original background content.
-                                    drawContent()
-                                    // Calculate the transition fraction (0 when foreground fully covers, 1 when fully swiped away).
-                                    val transitionFraction =
-                                        (offset / maxWidthPxUpdated).coerceIn(0f, 1f)
-                                    // Draw a shadow rectangle on top using your provided metric.
-                                    drawRect(
-                                        color = Color.Black,
-                                        alpha = 0.25f - (transitionFraction * 0.25f)
-                                    )
-                                }
-
+                val offsetModifier = when {
+                    // Can't move if there is only 1 screen
+                    screens.size == 1 -> Modifier
+                    // Screen in background should be dimmed and slightly moved to imitate ios behaviour
+                    screens.size == 2 && index == 0 -> Modifier
+                        .offset {
+                            val offsetX =
+                                calculateBackgroundScreenOffset(offset, maxWidthPxUpdated)
+                            IntOffset(offsetX.roundToInt(), 0)
                         }
+                        .drawWithContent {
+                            // Draw the original background content
+                            drawContent()
+                            // Draw dimming
+                            // Calculate the transition fraction (0 when foreground fully covers, 1 when fully swiped away)
+                            val transitionFraction =
+                                (offset / maxWidthPxUpdated).coerceIn(0f, 1f)
+                            // Draw a shadow rectangle on top
+                            drawRect(
+                                color = Color.Black,
+                                alpha = 0.25f - (transitionFraction * 0.25f)
+                            )
+                        }
+                    // Top screen should be able to have offset while dragging
+                    screens.size == 2 && index == 1 -> Modifier.offset {
+                        IntOffset(offset.roundToInt(), 0)
                     }
 
                     else -> error("Screen size must be either 1 or 2")
                 }
 
-                val draggableModifier = when (screens.size) {
-                    1 -> {
-                        Modifier
-                    }
-
-                    2 -> {
-                        if (index == 1) {
-                            Modifier.anchoredDraggable(
-                                anchoredDraggableState,
-                                Orientation.Horizontal
-                            )
-                        } else {
-                            Modifier
-                        }
-                    }
+                val draggableModifier = when {
+                    screens.size == 1 -> Modifier
+                    screens.size == 2 && index == 0 -> Modifier
+                    screens.size == 2 && index == 1 -> Modifier.anchoredDraggable(
+                        state = anchoredDraggableState,
+                        orientation = Orientation.Horizontal,
+                        flingBehavior = flingBehavior
+                    )
 
                     else -> error("Screen size must be either 1 or 2")
                 }
 
                 val render by remember(screens.size, index, offset, maxWidthPxUpdated) {
                     derivedStateOf {
-                        when (screens.size) {
-                            1 -> true
-                            2 -> {
-                                when (index) {
-                                    0 -> when (offset) {
-                                        0f -> false
-                                        maxWidthPxUpdated -> true
-                                        else -> true
-                                    }
-
-                                    1 -> when (offset) {
-                                        0f -> true
-                                        maxWidthPxUpdated -> false
-                                        else -> true
-                                    }
-
-                                    else -> error("Screen size must be either 1 or 2")
-                                }
-                            }
-
+                        when {
+                            // Always render if only 1 screen
+                            screens.size == 1 -> true
+                            // Render the bottom screen only if the top has no offset
+                            screens.size == 2 && index == 0 -> offset != 0f
+                            // Render the top screen only if its not at max offset
+                            screens.size == 2 && index == 1 -> offset != maxWidthPxUpdated
                             else -> error("Screen size must be either 1 or 2")
                         }
                     }
@@ -282,16 +282,13 @@ public fun CurrentScreenIOSSwipe(
 
                 val peeking by remember(screens.size, index) {
                     derivedStateOf {
-                        when (screens.size) {
-                            1 -> false
-                            2 -> {
-                                when (index) {
-                                    0 -> true
-                                    1 -> false
-                                    else -> error("Screen size must be either 1 or 2")
-                                }
-                            }
-
+                        when {
+                            // Can't be peeking if there is only 1 screen
+                            screens.size == 1 -> false
+                            // Current screen is bottom screen, so peeking
+                            screens.size == 2 && index == 0 -> true
+                            // Current screen is top screen, so no peeking
+                            screens.size == 2 && index == 1 -> false
                             else -> error("Screen size must be either 1 or 2")
                         }
                     }
@@ -478,7 +475,7 @@ private fun <T> SnapshotStateList<T>.swap(i: Int, j: Int) {
  * @param screenWidth the full width of the screen in pixels
  * @param maxDisplacementFraction the fraction of the screen width to displace at the start (e.g. 0.3 for 30%)
  */
-private fun calculatePreviousScreenOffset(
+private fun calculateBackgroundScreenOffset(
     currentOffset: Float,
     screenWidth: Float,
     maxDisplacementFraction: Float = 0.3f,
@@ -489,4 +486,103 @@ private fun calculatePreviousScreenOffset(
     val fraction = (currentOffset / screenWidth).coerceIn(0f, 1f)
     // Linear interpolation from -maxDisplacement to 0
     return -maxDisplacement + fraction * maxDisplacement
+}
+
+
+@Composable
+private fun <T> iosFlingBehavior(
+    state: AnchoredDraggableState<T>,
+    positionalThreshold: (totalDistance: Float) -> Float,
+    velocityThreshold: () -> Float,
+    snapAnimationSpec: AnimationSpec<Float>,
+    decayAnimationSpec: DecayAnimationSpec<Float>,
+): TargetedFlingBehavior {
+    return remember(
+        state,
+        positionalThreshold,
+        velocityThreshold,
+        snapAnimationSpec,
+        decayAnimationSpec
+    ) {
+        anchoredIOSDraggableFlingBehavior(
+            state = state,
+            positionalThreshold = positionalThreshold,
+            velocityThreshold = velocityThreshold,
+            snapAnimationSpec = snapAnimationSpec,
+            decayAnimationSpec = decayAnimationSpec
+        )
+    }
+}
+
+private fun <T> anchoredIOSDraggableFlingBehavior(
+    state: AnchoredDraggableState<T>,
+    positionalThreshold: (totalDistance: Float) -> Float,
+    velocityThreshold: () -> Float,
+    snapAnimationSpec: AnimationSpec<Float>,
+    decayAnimationSpec: DecayAnimationSpec<Float>,
+): TargetedFlingBehavior =
+    snapFlingBehavior(
+        decayAnimationSpec = decayAnimationSpec,
+        snapAnimationSpec = snapAnimationSpec,
+        snapLayoutInfoProvider =
+            anchoredDraggableLayoutInfoProvider(
+                state = state,
+                positionalThreshold = positionalThreshold,
+                velocityThreshold = velocityThreshold
+            )
+    )
+
+// Extracted from jetpack compose
+private fun <T> anchoredDraggableLayoutInfoProvider(
+    state: AnchoredDraggableState<T>,
+    positionalThreshold: (totalDistance: Float) -> Float,
+    velocityThreshold: () -> Float,
+): SnapLayoutInfoProvider =
+    object : SnapLayoutInfoProvider {
+
+        override fun calculateApproachOffset(velocity: Float, decayOffset: Float) = 0f
+
+        override fun calculateSnapOffset(velocity: Float): Float {
+            val currentOffset = state.requireOffset()
+            val target =
+                state.anchors.computeTarget(
+                    currentOffset = currentOffset,
+                    velocity = velocity,
+                    positionalThreshold = positionalThreshold,
+                    velocityThreshold = velocityThreshold
+                )
+            return state.anchors.positionOf(target) - currentOffset
+        }
+    }
+
+private fun <T> DraggableAnchors<T>.computeTarget(
+    currentOffset: Float,
+    velocity: Float,
+    positionalThreshold: (totalDistance: Float) -> Float,
+    velocityThreshold: () -> Float,
+): T {
+    val currentAnchors = this
+    require(!currentOffset.isNaN()) { "The offset provided to computeTarget must not be NaN." }
+    val isMoving = abs(velocity) > 0.0f
+    val isMovingForward = isMoving && velocity > 0f
+    // When we're not moving, pick the closest anchor and don't consider directionality
+    return if (!isMoving) {
+        currentAnchors.closestAnchor(currentOffset)!!
+    } else if (abs(velocity) >= abs(velocityThreshold())) {
+        currentAnchors.closestAnchor(currentOffset, searchUpwards = isMovingForward)!!
+    } else {
+        val left = currentAnchors.closestAnchor(currentOffset, false)!!
+        val leftAnchorPosition = currentAnchors.positionOf(left)
+        val right = currentAnchors.closestAnchor(currentOffset, true)!!
+        val rightAnchorPosition = currentAnchors.positionOf(right)
+        val distance = abs(leftAnchorPosition - rightAnchorPosition)
+        val relativeThreshold = abs(positionalThreshold(distance))
+        val closestAnchorFromStart =
+            if (isMovingForward) leftAnchorPosition else rightAnchorPosition
+        val relativePosition = abs(closestAnchorFromStart - currentOffset)
+        when (relativePosition >= relativeThreshold) {
+            true -> if (isMovingForward) right else left
+            false -> if (isMovingForward) left else right
+        }
+    }
 }
