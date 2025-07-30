@@ -6,7 +6,7 @@ import io.github.hristogochev.vortex.util.ThreadSafeSet
 /**
  * The internal storage for disposable effects
  */
-internal object ScreenDisposableEffectStore {
+public object ScreenDisposableEffectStore {
 
     private val scheduledScreenDisposals =
         ThreadSafeMap<String, ThreadSafeSet<ScreenDisposableEffect>>()
@@ -16,7 +16,7 @@ internal object ScreenDisposableEffectStore {
     /**
      * Schedule a disposable effect for a screen in the current composition
      */
-    fun store(
+    internal fun store(
         screenStateKey: String,
         effectKey: String,
         keys: Set<Any>,
@@ -62,7 +62,7 @@ internal object ScreenDisposableEffectStore {
     }
 
 
-    fun dispose(screenStateKey: String) {
+    public fun dispose(screenStateKey: String) {
         val screenDisposables = scheduledScreenDisposals.remove(screenStateKey) ?: return
 
         val effects = screenDisposables.sortedBy { it.registerOrderIndex }.reversed()
@@ -72,7 +72,7 @@ internal object ScreenDisposableEffectStore {
         }
     }
 
-    data class ScreenDisposableEffect(
+    internal data class ScreenDisposableEffect(
         val uniqueKey: String,
         val registerOrderIndex: Int,
         val conditionalKeys: Set<Any>,

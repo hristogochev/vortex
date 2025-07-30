@@ -4,8 +4,7 @@ import androidx.compose.runtime.DisallowComposableCalls
 import io.github.hristogochev.vortex.util.ThreadSafeMap
 import kotlinx.coroutines.flow.MutableStateFlow
 
-@PublishedApi
-internal object ScreenModelStore {
+public object ScreenModelStore {
 
     @PublishedApi
     internal val screenModels: MutableMap<String, ScreenModel> = ThreadSafeMap()
@@ -34,7 +33,7 @@ internal object ScreenModelStore {
     /**
      * Gets and optionally saves a dependency for a screen model
      */
-    inline fun <reified T : Any> getOrPutScreenModelDependency(
+    internal inline fun <reified T : Any> getOrPutScreenModelDependency(
         screenModel: ScreenModel,
         name: String,
         noinline onDispose: @DisallowComposableCalls (T) -> Unit = {},
@@ -63,7 +62,7 @@ internal object ScreenModelStore {
     /**
      * Disposes of all screen models and their dependencies for a screen/navigator
      */
-    fun dispose(holderKey: String) {
+    public fun dispose(holderKey: String) {
         // Creates a copy of all screen model keys
         // Finds the ones starting with the holder key
         // Then disposes of all screen models with the keys that match
