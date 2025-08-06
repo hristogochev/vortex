@@ -33,7 +33,6 @@ import io.github.hristogochev.vortex.navigator.Navigator
 import io.github.hristogochev.vortex.stack.StackEvent
 import io.github.hristogochev.vortex.transitions.AndroidPredictiveBackTransition
 import io.github.hristogochev.vortex.transitions.AndroidPredictiveBackTransitionCancellable
-import io.github.hristogochev.vortex.transitions.ScreenTransitionCancellable
 import io.github.hristogochev.vortex.util.currentOrThrow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onCompletion
@@ -46,7 +45,7 @@ import kotlin.coroutines.cancellation.CancellationException
 /**
  *  Displays the current screen of a [Navigator] with an Android predictive back gesture.
  *
- *  The Android predictive back gesture transition is configurable by overriding [PredictiveBackScreenTransition]
+ *  The Android predictive back gesture transition is configurable by overriding [ScreenTransitionCancellable]
  *
  *  Takes in a default [ScreenTransition] for when a screen enters and leaves the visible area.
  *

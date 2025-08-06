@@ -32,7 +32,6 @@ import io.github.hristogochev.vortex.navigator.Navigator
 import io.github.hristogochev.vortex.stack.StackEvent
 import io.github.hristogochev.vortex.transitions.IOSSlideTransition
 import io.github.hristogochev.vortex.transitions.IOSSlideTransitionCancellable
-import io.github.hristogochev.vortex.transitions.ScreenTransitionCancellable
 import io.github.hristogochev.vortex.util.currentOrThrow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onCompletion
@@ -45,7 +44,7 @@ import kotlin.coroutines.cancellation.CancellationException
 /**
  *  Displays the current screen of a [Navigator] with an iOS-like swipe transition.
  *
- *  The iOS-like swipe back transition is configurable by overriding [SwipeBackScreenTransition]
+ *  The iOS-like swipe back transition is configurable by overriding [ScreenTransitionCancellable]
  *
  *  Takes in a default [ScreenTransition] for when a screen enters and leaves the visible area.
  *

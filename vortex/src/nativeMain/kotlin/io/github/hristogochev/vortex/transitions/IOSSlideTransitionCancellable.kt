@@ -7,6 +7,7 @@ import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import io.github.hristogochev.vortex.screen.ScreenTransitionCancellable
 
 public data object IOSSlideTransitionCancellable : ScreenTransitionCancellable {
     override val zIndex: Float? = -1f
