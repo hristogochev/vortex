@@ -35,5 +35,5 @@ fun App() {
 }
 ```
 
-!!! info "You can find source code for a working example [here](https://github.com/hristogochev/vortex/blob/main/samples/multiplatform/src/commonMain/kotlin/io/github/hristogochev/vortex/sample/multiplatform/navigation/bottomSheet/BottomSheetNavigation.kt)."
+!!! info "You can find source code for a working example [here](https://github.com/hristogochev/vortex/blob/main/samples/sample/src/commonMain/kotlin/io/github/hristogochev/vortex/sample/bottomSheetNavigation/BottomSheetNavigation.kt)."
 

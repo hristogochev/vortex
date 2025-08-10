@@ -3,6 +3,7 @@ agp = "8.7.3"
 kotlin = "2.1.21"
 android-minSdk = "21"
 android-compileSdk = "36"
+android-targetSdk = "36"
 compose-multiplatform = "1.8.1"
 androidx-compose-activity = "1.10.1"
 # Kodein extension
@@ -42,3 +43,4 @@ composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "k
 # Samples
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlinParcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
