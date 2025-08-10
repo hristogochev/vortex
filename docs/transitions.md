@@ -94,5 +94,5 @@ fun App(){
 
 You can create your own transitions by implementing the `ScreenTransition` interface.
 
-!!! info "You can find source code for a working example [here](https://github.com/hristogochev/vortex/blob/main/samples/multiplatform/src/commonMain/kotlin/io/github/hristogochev/vortex/sample/multiplatform/transitions/Transitions.kt)."
+!!! info "You can find source code for a working example [here](https://github.com/hristogochev/vortex/blob/main/samples/sample/src/commonMain/kotlin/io/github/hristogochev/vortex/sample/transitions/TransitionsExample.kt)."
 
