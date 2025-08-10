@@ -21,7 +21,8 @@ import androidx.compose.ui.unit.dp
 import java.util.UUID
 
 val sampleItems: List<String>
-    get() = (0..99).map { "Item #$it | ${UUID.randomUUID().toString().substringBefore('-')}" }
+    get() = (0..99)
+        .map { "Item #$it | ${UUID.randomUUID().toString().substringBefore('-')}" }
 
 @Composable
 fun LoadingContent() {

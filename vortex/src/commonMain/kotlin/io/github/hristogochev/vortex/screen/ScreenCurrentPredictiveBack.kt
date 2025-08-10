@@ -9,7 +9,6 @@ import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.SeekableTransitionState
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.rememberTransition
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -26,14 +25,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.PredictiveBackHandler
+import io.github.hristogochev.vortex.annotation.ExperimentalVortexApi
 import io.github.hristogochev.vortex.model.ScreenModelStore
 import io.github.hristogochev.vortex.navigator.LocalNavigatorStateHolder
 import io.github.hristogochev.vortex.navigator.Navigator
 import io.github.hristogochev.vortex.stack.StackEvent
-import io.github.hristogochev.vortex.transitions.IOSSlideTransition
-import io.github.hristogochev.vortex.transitions.IOSSlideTransitionCancellable
 import io.github.hristogochev.vortex.util.currentOrThrow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -42,30 +41,30 @@ import kotlinx.coroutines.sync.withLock
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
- *  Displays the current screen of a [Navigator] with an iOS-like swipe transition.
+ *  Displays the current screen of a [Navigator] with an predictive-back transition.
  *
- *  The iOS-like swipe back transition is configurable by overriding [ScreenTransitionCancellable]
+ *  The predictive-back transition must be of type [ScreenTransitionPredictiveBack].
  *
  *  Takes in a default [ScreenTransition] for when a screen enters and leaves the visible area.
  *
- *  By default the transition is as close as we can get to the native iOS transition.
- *
  *  Each [Screen] can have it's own transition for when it enters and leaves the visible area.
  */
-@OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
+@ExperimentalVortexApi
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
-public fun CurrentScreenIOSSwipe2(
+public fun CurrentScreenPredictiveBack(
     navigator: Navigator,
-    defaultOnScreenAppearTransition: ScreenTransition? = IOSSlideTransition.Appear,
-    defaultOnScreenDisappearTransition: ScreenTransition? = IOSSlideTransition.Disappear,
-    defaultOnSwipeBackTransition: ScreenTransitionCancellable = IOSSlideTransitionCancellable,
+    defaultPredictiveBackTransition: ScreenTransitionPredictiveBack,
+    enabled: Boolean = true,
+    swipeSides: List<Int> = listOf(0, 1),
+    defaultOnScreenAppearTransition: ScreenTransition? = null,
+    defaultOnScreenDisappearTransition: ScreenTransition? = null,
     modifier: Modifier = Modifier,
     contentAlignment: Alignment = Alignment.TopStart,
     contentKey: (Screen) -> Any = { it.key },
-    disableSwipeToGoBack: Boolean = false,
     content: @Composable AnimatedVisibilityScope.(Screen) -> Unit = { it.Content() },
 ) {
-    // Configure disposal like in CurrentScreen
+    // This updates instantly when the stack changes
     var unexpectedScreenStateKeysQueue by rememberSaveable(saver = unexpectedScreenStateKeysQueueSaver()) {
         mutableStateOf(emptySet())
     }
@@ -103,61 +102,70 @@ public fun CurrentScreenIOSSwipe2(
         }
     }
 
+    val currentScreenCanPop by remember(navigator.current) {
+        derivedStateOf {
+            navigator.current.canPop
+        }
+    }
+
     var isInPredictiveBack by remember { mutableStateOf(false) }
 
     val coroutineScope = rememberCoroutineScope()
 
-    PredictiveBackHandler(!disableSwipeToGoBack && prevScreen != null) { progress ->
-        val prevScreen = prevScreen ?: return@PredictiveBackHandler
+    PredictiveBackHandler(
+        enabled && prevScreen != null && currentScreenCanPop,
+        onBack = onBack@{ progress ->
+            val prevScreen = prevScreen ?: return@onBack
 
-        progress.onEach { backEvent ->
-            // Fix for swiping back during a normal transition
-            if (!isInPredictiveBack && transitionState.fraction > 0) return@onEach
-            // Make sure we can only swipe left to right
-            if (backEvent.swipeEdge == 1) return@onEach
-            isInPredictiveBack = true
-            transitionState.seekTo(backEvent.progress, prevScreen)
-        }.onCompletion { cause ->
-            if (!isInPredictiveBack) return@onCompletion
-            when (cause) {
-                null -> {
-                    navigator.pop()
-                    isInPredictiveBack = false
-                }
+            progress
+                .filter { backEvent ->
+                    swipeSides.contains(backEvent.swipeEdge)
+                }.onEach { backEvent ->
+                    if (!isInPredictiveBack && transitionState.fraction > 0) return@onEach
+                    isInPredictiveBack = true
+                    transitionState.seekTo(backEvent.progress, prevScreen)
+                }.onCompletion { cause ->
+                    if (!isInPredictiveBack) return@onCompletion
+                    when (cause) {
+                        null -> {
+                            navigator.pop()
+                            isInPredictiveBack = false
+                        }
 
-                is CancellationException -> {
-                    coroutineScope.launch {
-                        val mutex = Mutex()
-                        animate(
-                            transitionState.fraction,
-                            0f,
-                            animationSpec = defaultOnSwipeBackTransition.cancellableAnimationSpec
-                        ) { value, _ ->
-                            launch {
-                                mutex.withLock {
-                                    transitionState.seekTo(value)
-                                    if (value == 0f) {
-                                        isInPredictiveBack = false
-                                        transitionState.snapTo(navigator.current)
+                        is CancellationException -> {
+                            coroutineScope.launch {
+                                val mutex = Mutex()
+                                animate(
+                                    transitionState.fraction,
+                                    0f,
+                                    animationSpec = defaultPredictiveBackTransition.cancelAnimationSpec
+                                ) { value, _ ->
+                                    launch {
+                                        mutex.withLock {
+                                            transitionState.seekTo(value)
+                                            if (value == 0f) {
+                                                isInPredictiveBack = false
+                                                transitionState.snapTo(navigator.current)
+                                            }
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
-                }
 
-                else -> {
-                    isInPredictiveBack = false
-                }
-            }
-        }.collect()
-    }
+                        else -> {
+                            isInPredictiveBack = false
+                        }
+                    }
+                }.collect()
+        })
 
     var currentContentTransform by remember { mutableStateOf<ContentTransform?>(null) }
     transition.AnimatedContent(
         transitionSpec = {
             val transition = when {
-                isInPredictiveBack -> defaultOnSwipeBackTransition
+                isInPredictiveBack -> initialState.predictiveBackTransition
+                    ?: defaultPredictiveBackTransition
 
                 navigator.lastEvent == StackEvent.Pop -> initialState.onDisappearTransition
                     ?: defaultOnScreenDisappearTransition

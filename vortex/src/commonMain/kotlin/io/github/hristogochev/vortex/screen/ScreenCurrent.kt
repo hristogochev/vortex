@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -23,6 +24,7 @@ import io.github.hristogochev.vortex.navigator.LocalNavigatorStateHolder
 import io.github.hristogochev.vortex.navigator.Navigator
 import io.github.hristogochev.vortex.stack.StackEvent
 import io.github.hristogochev.vortex.stack.isDisposableEvent
+import io.github.hristogochev.vortex.util.BackHandler
 import io.github.hristogochev.vortex.util.currentOrThrow
 
 /**
@@ -62,12 +64,21 @@ public fun CurrentScreen(
         }
     }
 
+    BackHandler(
+        enabled = navigator.canPop && navigator.current.canPop,
+        onBack = {
+            navigator.pop()
+        }
+    )
+
     AnimatedContent(
         targetState = navigator.current,
         transitionSpec = {
 
             val transition = when (navigator.lastEvent) {
-                StackEvent.Pop -> initialState.onDisappearTransition ?: defaultOnScreenDisappearTransition
+                StackEvent.Pop -> initialState.onDisappearTransition
+                    ?: defaultOnScreenDisappearTransition
+
                 else -> targetState.onAppearTransition ?: defaultOnScreenAppearTransition
             }
 

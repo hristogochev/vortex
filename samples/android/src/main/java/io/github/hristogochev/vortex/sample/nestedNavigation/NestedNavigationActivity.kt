@@ -14,9 +14,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import io.github.hristogochev.vortex.screen.CurrentScreen
 import io.github.hristogochev.vortex.navigator.Navigator
-import io.github.hristogochev.vortex.sample.basicNavigation.BasicNavigationScreen
+import io.github.hristogochev.vortex.screen.CurrentScreen
 
 class NestedNavigationActivity : ComponentActivity() {
 

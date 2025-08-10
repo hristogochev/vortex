@@ -7,5 +7,6 @@ import io.github.hristogochev.vortex.navigator.Navigator
 fun SampleApplication() {
     Navigator(
         screen = BasicNavigationScreen(index = 0),
+        defaultBackHandler = false
     )
 }

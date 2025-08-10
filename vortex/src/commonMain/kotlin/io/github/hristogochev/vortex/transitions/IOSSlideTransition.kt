@@ -8,8 +8,8 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import io.github.hristogochev.vortex.screen.ScreenTransition
 
-public sealed class IOSSlideTransition : ScreenTransition {
-    public data object Appear : IOSSlideTransition() {
+public sealed interface IOSSlideTransition : ScreenTransition {
+    public data object Appear : IOSSlideTransition {
         override fun enter(): EnterTransition =
             slideInHorizontally(spring(stiffness = Spring.StiffnessLow)) { it }
 
@@ -17,7 +17,7 @@ public sealed class IOSSlideTransition : ScreenTransition {
             slideOutHorizontally(spring(stiffness = Spring.StiffnessLow)) { -(it.toFloat() * 0.3f).toInt() }
     }
 
-    public data object Disappear : IOSSlideTransition() {
+    public data object Disappear : IOSSlideTransition {
         override val zIndex: Float? = -1f
 
         override fun enter(): EnterTransition =

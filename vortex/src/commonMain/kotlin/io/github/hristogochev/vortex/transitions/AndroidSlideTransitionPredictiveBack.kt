@@ -2,6 +2,7 @@ package io.github.hristogochev.vortex.transitions
 
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.PathEasing
@@ -15,6 +16,7 @@ import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import io.github.hristogochev.vortex.screen.ScreenTransitionPredictiveBack
 
 /*
 Urls:
@@ -42,18 +44,19 @@ https://cs.android.com/android/platform/superproject/main/+/main:frameworks/base
 private val FastOutExtraSlowInEasing = PathEasing(
     PathParser().parsePathString(
         "M0,0 C0.05,0 0.133333,0.06 0.166666,0.4 " +
-            "C0.208333,0.82 0.25,1 1,1"
+                "C0.208333,0.82 0.25,1 1,1"
     ).toPath()            // parse → PathNode list → Path
 )                                          // :contentReference[oaicite:0]{index=0}
 
 // <pathInterpolator standard_accelerate.xml>
-private val StandardAccelerateEasing = CubicBezierEasing(0.3f, 0f, 1f, 1f)  // :contentReference[oaicite:1]{index=1}
+private val StandardAccelerateEasing =
+    CubicBezierEasing(0.3f, 0f, 1f, 1f)  // :contentReference[oaicite:1]{index=1}
 
 /* ----------  C O R E   S P E C S  ---------- */
 
 private const val SLIDE_DURATION = 450       // all slide/extend anims are 450 ms
 private const val PREDICTIVE_BACK_SCALE_DURATION = (SLIDE_DURATION * 0.1).toInt()
-private const val FADE_DURATION  =  83       // both fades last   83 ms
+private const val FADE_DURATION = 83       // both fades last   83 ms
 
 private val FadeOutSpec: TweenSpec<Float>
     get() = tween(
@@ -121,3 +124,17 @@ internal fun androidPredictiveBackExitBackward(density: Density): ExitTransition
         targetOffsetX = { shiftPx(density) },       // to +96 dp                      :contentReference[oaicite:10]{index=10}
         animationSpec = SlideSpecForward
     ) + fadeOut(animationSpec = FadeOutSpec) // α 1→0
+
+public data class AndroidSlideTransitionTransitionPredictiveBack(val density: Density) :
+    ScreenTransitionPredictiveBack {
+    override val zIndex: Float? = -1f
+
+    override val cancelAnimationSpec: AnimationSpec<Float> = tween(
+        durationMillis = 100,
+        easing = LinearEasing
+    )
+
+    override fun enter(): EnterTransition = androidPredictiveBackEnterBackward(density)
+
+    override fun exit(): ExitTransition = androidPredictiveBackExitBackward(density)
+}
