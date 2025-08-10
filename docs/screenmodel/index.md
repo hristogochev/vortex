@@ -46,5 +46,5 @@ val screenModel = rememberScreenModel(tag = "CUSTOM_TAG") { HomeScreenModel() }
 !!! note
     If you are targeting Desktop, you should provide the dependency `org.jetbrains.kotlinx:kotlinx-coroutines-swing`, the `screenModelScope` depends on `Dispatchers.Main` provided by this library on Desktop. We don't include it because this library is incompatible with IntelliJ Plugin, [see](https://youtrack.jetbrains.com/issue/IDEA-285839). If you are targeting Desktop for IntelliJ plugins, this library does not require to be provided.
 
-!!! info "You can find source code for a working example [here](https://github.com/hristogochev/vortex/blob/main/samples/multiplatform/src/commonMain/kotlin/io/github/hristogochev/vortex/sample/multiplatform/screenModel/screenModel/ScreenModel.kt)."
+!!! info "You can find source code for a working example [here](https://github.com/hristogochev/vortex/blob/main/samples/sample/src/commonMain/kotlin/io/github/hristogochev/vortex/sample/screenModel/ScreenModelIntegration.kt)."
 

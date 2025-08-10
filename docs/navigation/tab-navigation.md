@@ -76,4 +76,4 @@ private fun RowScope.TabNavigationItem(tab: Tab) {
 
 !!! note "Tabs never get disposed until the screen owning the navigator they are in gets disposed."
 
-!!! info "You can find source code for a working example [here](https://github.com/hristogochev/vortex/blob/main/samples/multiplatform/src/commonMain/kotlin/io/github/hristogochev/vortex/sample/multiplatform/navigation/tab/TabNavigation.kt)."
+!!! info "You can find source code for a working example [here](https://github.com/hristogochev/vortex/blob/main/samples/sample/src/commonMain/kotlin/io/github/hristogochev/vortex/sample/tabNavigation/TabNavigation.kt)."

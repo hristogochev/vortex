@@ -19,5 +19,4 @@ rootProject.name = "Vortex"
 include(":vortex")
 include(":vortex-koin")
 include(":vortex-kodein")
-include(":samples:android")
-include(":samples:multiplatform")
+include(":samples:sample")
