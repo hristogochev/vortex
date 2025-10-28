@@ -41,6 +41,7 @@ public fun CurrentScreen(
     defaultOnScreenAppearTransition: ScreenTransition? = null,
     defaultOnScreenDisappearTransition: ScreenTransition? = null,
     modifier: Modifier = Modifier,
+    enableBackHandler: Boolean = true,
     contentAlignment: Alignment = Alignment.TopStart,
     contentKey: (Screen) -> Any = { it.key },
     content: @Composable AnimatedVisibilityScope.(Screen) -> Unit = { it.Content() },
@@ -64,7 +65,7 @@ public fun CurrentScreen(
     }
 
     BackHandler(
-        enabled = navigator.canPop,
+        enabled = enableBackHandler && navigator.canPop,
         onBack = {
             navigator.pop()
         }
@@ -139,12 +140,13 @@ public fun CurrentScreen(
 @Composable
 public fun CurrentScreenNoTransitions(
     navigator: Navigator,
+    enableBackHandler: Boolean = true,
     content: @Composable (Screen) -> Unit = { it.Content() },
 ) {
     CurrentScreenNoTransitionsDisposable(navigator)
 
     BackHandler(
-        enabled = navigator.canPop,
+        enabled = enableBackHandler && navigator.canPop,
         onBack = {
             navigator.pop()
         }

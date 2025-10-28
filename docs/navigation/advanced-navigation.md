@@ -62,23 +62,23 @@ fun App(){
 
 ### Custom back handlers
 
-By default, any navigator has its own back handler which `pops` the current screen.
+By default, any screen rendering has its own back handler which `pops` the current screen.
 
-You can opt out of this behaviour by setting the `defaultBackHandler` flag to `false`.
+You can opt out of this behaviour by setting the `enableBackHandler` flag to `false`.
 
 You can then optionally create your own back handler:
 
 ```kotlin
 @Composable
 fun App(){
-    Navigator(HomeScreen, defaultBackHandler = false){ navigator ->
+    Navigator(HomeScreen){ navigator ->
    
         // Custom back handler   
         BackHandler(enabled = /* ... */){
             // ...
         }
         
-        CurrentScreen(navigator)
+        CurrentScreen(navigator, enableBackHandler = false)
     }
 }
 ```

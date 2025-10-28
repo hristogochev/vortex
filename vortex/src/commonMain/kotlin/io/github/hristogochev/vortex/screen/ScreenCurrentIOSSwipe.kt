@@ -65,13 +65,14 @@ public fun CurrentScreenIOSSwipe(
     draggableHandlePadding: PaddingValues = PaddingValues(top = 80.dp),
     draggableHandleWidth: Dp = 16.dp,
     draggableHandleFillMaxHeight: Boolean = true,
+    enableBackHandler: Boolean = true,
     content: @Composable (Screen) -> Unit = { it.Content() },
 ) {
 
     CurrentScreenNoTransitionsDisposable(navigator)
 
     BackHandler(
-        enabled = true,
+        enabled = enableBackHandler,
         onBack = {
             navigator.pop()
         }
