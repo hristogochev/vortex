@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import io.github.hristogochev.vortex.navigator.Navigator
 import io.github.hristogochev.vortex.stack.StackEvent
+import io.github.hristogochev.vortex.util.BackHandler
 import kotlinx.coroutines.flow.first
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -67,6 +68,13 @@ public fun CurrentScreenIOSSwipe(
 ) {
 
     CurrentScreenNoTransitionsDisposable(navigator)
+
+    BackHandler(
+        enabled = true,
+        onBack = {
+            navigator.pop()
+        }
+    )
 
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val maxWidthPx = constraints.maxWidth.toFloat()

@@ -113,7 +113,7 @@ public fun CurrentScreenPredictiveBack(
     val coroutineScope = rememberCoroutineScope()
 
     PredictiveBackHandler(
-        enabled && prevScreen != null && currentScreenCanPop,
+        enabled = enabled && prevScreen != null && currentScreenCanPop,
         onBack = onBack@{ progress ->
             val prevScreen = prevScreen ?: return@onBack
 

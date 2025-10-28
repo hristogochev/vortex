@@ -10,7 +10,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -65,7 +64,7 @@ public fun CurrentScreen(
     }
 
     BackHandler(
-        enabled = navigator.canPop && navigator.current.canPop,
+        enabled = navigator.canPop,
         onBack = {
             navigator.pop()
         }
@@ -143,6 +142,13 @@ public fun CurrentScreenNoTransitions(
     content: @Composable (Screen) -> Unit = { it.Content() },
 ) {
     CurrentScreenNoTransitionsDisposable(navigator)
+
+    BackHandler(
+        enabled = navigator.canPop,
+        onBack = {
+            navigator.pop()
+        }
+    )
 
     navigator.current.render {
         content(it)
