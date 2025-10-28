@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import io.github.hristogochev.vortex.annotation.ExperimentalVortexApi
 import io.github.hristogochev.vortex.screen.ScreenTransitionPredictiveBack
 
 /*
@@ -127,14 +128,19 @@ internal fun androidPredictiveBackExitBackward(density: Density): ExitTransition
 
 public data class AndroidSlideTransitionTransitionPredictiveBack(val density: Density) :
     ScreenTransitionPredictiveBack {
+
+    @ExperimentalVortexApi
     override val zIndex: Float? = -1f
 
+    @ExperimentalVortexApi
     override val cancelAnimationSpec: AnimationSpec<Float> = tween(
         durationMillis = 100,
         easing = LinearEasing
     )
 
+    @ExperimentalVortexApi
     override fun enter(): EnterTransition = androidPredictiveBackEnterBackward(density)
 
+    @ExperimentalVortexApi
     override fun exit(): ExitTransition = androidPredictiveBackExitBackward(density)
 }

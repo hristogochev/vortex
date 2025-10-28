@@ -25,7 +25,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.PredictiveBackHandler
-import io.github.hristogochev.vortex.annotation.ExperimentalVortexApi
 import io.github.hristogochev.vortex.model.ScreenModelStore
 import io.github.hristogochev.vortex.navigator.LocalNavigatorStateHolder
 import io.github.hristogochev.vortex.navigator.Navigator
@@ -49,7 +48,6 @@ import kotlin.coroutines.cancellation.CancellationException
  *
  *  Each [Screen] can have it's own transition for when it enters and leaves the visible area.
  */
-@ExperimentalVortexApi
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 public fun CurrentScreenPredictiveBack(

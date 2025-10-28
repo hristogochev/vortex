@@ -58,6 +58,7 @@ import kotlin.math.roundToInt
  *
  *  Ignores the override transitions for all screens rendered.
  */
+@Deprecated("Please use CurrentScreenPredictiveBack with IOSSlideTransitionPredictiveBack")
 @Composable
 public fun CurrentScreenIOSSwipe(
     navigator: Navigator,

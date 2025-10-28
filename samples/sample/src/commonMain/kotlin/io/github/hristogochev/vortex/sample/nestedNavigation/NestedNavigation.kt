@@ -15,7 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
-import io.github.hristogochev.vortex.annotation.ExperimentalVortexApi
 import io.github.hristogochev.vortex.navigator.Navigator
 import io.github.hristogochev.vortex.sample.basicNavigation.BasicScreen
 import io.github.hristogochev.vortex.screen.CurrentScreen
@@ -24,7 +23,6 @@ import io.github.hristogochev.vortex.screen.Screen
 import io.github.hristogochev.vortex.transitions.AndroidSlideTransitionTransitionPredictiveBack
 
 
-@OptIn(ExperimentalVortexApi::class)
 @Composable
 fun NestedNavigationIntegration() {
     Box(modifier = Modifier.fillMaxSize().background(Color.Blue)) {
@@ -49,7 +47,6 @@ data object Screen0 : Screen {
 
 data object ScreenA : Screen {
 
-    @OptIn(ExperimentalVortexApi::class)
     @Composable
     override fun Content() {
         Column(modifier = Modifier.fillMaxSize().background(Color.Magenta)) {
