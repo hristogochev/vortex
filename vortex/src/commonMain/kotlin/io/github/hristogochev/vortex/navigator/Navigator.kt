@@ -54,13 +54,11 @@ public val Navigator.parentOrThrow: Navigator
 @Composable
 public fun Navigator(
     screen: Screen,
-    defaultBackHandler: Boolean = true,
     disposeOnForgotten: Boolean = false,
     content: @Composable (navigator: Navigator) -> Unit = { CurrentScreen(it) },
 ) {
     Navigator(
         screens = listOf(screen),
-        defaultBackHandler = defaultBackHandler,
         disposeOnForgotten = disposeOnForgotten,
         content = content
     )
@@ -69,7 +67,6 @@ public fun Navigator(
 @Composable
 public fun Navigator(
     screens: List<Screen>,
-    defaultBackHandler: Boolean = true,
     disposeOnForgotten: Boolean = false,
     content: @Composable (navigator: Navigator) -> Unit = { CurrentScreen(it) },
 ) {
@@ -150,10 +147,6 @@ public fun Navigator(
                     navigatorSaverDisposeUpdatedState(navigatorUpdatedState)
                 }
             }
-        }
-
-        if (defaultBackHandler) {
-            NavigatorBackHandler(navigator)
         }
 
         CompositionLocalProvider(

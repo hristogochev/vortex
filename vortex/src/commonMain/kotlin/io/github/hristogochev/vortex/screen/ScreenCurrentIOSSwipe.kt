@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import io.github.hristogochev.vortex.navigator.Navigator
 import io.github.hristogochev.vortex.stack.StackEvent
+import io.github.hristogochev.vortex.util.BackHandler
 import kotlinx.coroutines.flow.first
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -57,16 +58,25 @@ import kotlin.math.roundToInt
  *
  *  Ignores the override transitions for all screens rendered.
  */
+@Deprecated("Please use CurrentScreenPredictiveBack with IOSSlideTransitionPredictiveBack")
 @Composable
 public fun CurrentScreenIOSSwipe(
     navigator: Navigator,
     draggableHandlePadding: PaddingValues = PaddingValues(top = 80.dp),
     draggableHandleWidth: Dp = 16.dp,
     draggableHandleFillMaxHeight: Boolean = true,
+    enableBackHandler: Boolean = true,
     content: @Composable (Screen) -> Unit = { it.Content() },
 ) {
 
     CurrentScreenNoTransitionsDisposable(navigator)
+
+    BackHandler(
+        enabled = enableBackHandler,
+        onBack = {
+            navigator.pop()
+        }
+    )
 
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val maxWidthPx = constraints.maxWidth.toFloat()

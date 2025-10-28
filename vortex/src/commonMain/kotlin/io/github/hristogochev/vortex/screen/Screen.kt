@@ -16,6 +16,12 @@ public interface Screen : Serializable {
     public val onDisappearTransition: ScreenTransition?
         get() = null
 
+    public val predictiveBackTransition: ScreenTransitionPredictiveBack?
+        get() = null
+
+    public val canPop: Boolean
+        get() = true
+
     @Composable
     public fun Content()
 }

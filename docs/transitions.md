@@ -73,19 +73,22 @@ data class DetailsScreen(val id: Long, override val onAppearTransition: ScreenTr
 }
 ```
 
-### iOS swipe transition
+### Predictive back transition
 
-Vortex provides an experimental iOS-swipe back transition.
+Vortex provides a predictive back transition when used with `CurrentScreenPredictiveBack`.
 
-This solution is inspired by the ideas of multiple people in issue [#144](https://github.com/adrielcafe/voyager/issues/144) of Voyager.
+Here is an example with an iOS-swipe back transition.
 
-The transition does not take in account the overrides set for screens in the current navigator.
-
-```kotlin hl_lines="4"
+```kotlin hl_lines="4 5 6 7 8 9"
 @Composable
 fun App(){
     Navigator(HomeScreen) { navigator ->
-        CurrentScreenIOSSwipe(navigator)
+        CurrentScreenPredictiveBack(
+            navigator = navigator,
+            defaultPredictiveBackTransition = IOSSlideTransitionPredictiveBack,
+            defaultOnScreenDisappearTransition = IOSSlideTransition.Disappear,
+            defaultOnScreenAppearTransition = IOSSlideTransition.Appear
+        )
     }
 }
 ```

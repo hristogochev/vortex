@@ -23,6 +23,7 @@ import io.github.hristogochev.vortex.navigator.LocalNavigatorStateHolder
 import io.github.hristogochev.vortex.navigator.Navigator
 import io.github.hristogochev.vortex.stack.StackEvent
 import io.github.hristogochev.vortex.stack.isDisposableEvent
+import io.github.hristogochev.vortex.util.BackHandler
 import io.github.hristogochev.vortex.util.currentOrThrow
 
 /**
@@ -40,6 +41,7 @@ public fun CurrentScreen(
     defaultOnScreenAppearTransition: ScreenTransition? = null,
     defaultOnScreenDisappearTransition: ScreenTransition? = null,
     modifier: Modifier = Modifier,
+    enableBackHandler: Boolean = true,
     contentAlignment: Alignment = Alignment.TopStart,
     contentKey: (Screen) -> Any = { it.key },
     content: @Composable AnimatedVisibilityScope.(Screen) -> Unit = { it.Content() },
@@ -62,12 +64,21 @@ public fun CurrentScreen(
         }
     }
 
+    BackHandler(
+        enabled = enableBackHandler && navigator.canPop,
+        onBack = {
+            navigator.pop()
+        }
+    )
+
     AnimatedContent(
         targetState = navigator.current,
         transitionSpec = {
 
             val transition = when (navigator.lastEvent) {
-                StackEvent.Pop -> initialState.onDisappearTransition ?: defaultOnScreenDisappearTransition
+                StackEvent.Pop -> initialState.onDisappearTransition
+                    ?: defaultOnScreenDisappearTransition
+
                 else -> targetState.onAppearTransition ?: defaultOnScreenAppearTransition
             }
 
@@ -129,9 +140,17 @@ public fun CurrentScreen(
 @Composable
 public fun CurrentScreenNoTransitions(
     navigator: Navigator,
+    enableBackHandler: Boolean = true,
     content: @Composable (Screen) -> Unit = { it.Content() },
 ) {
     CurrentScreenNoTransitionsDisposable(navigator)
+
+    BackHandler(
+        enabled = enableBackHandler && navigator.canPop,
+        onBack = {
+            navigator.pop()
+        }
+    )
 
     navigator.current.render {
         content(it)

@@ -18,6 +18,7 @@ publish = "0.31.0"
 
 [libraries]
 compose-activity = { module = "androidx.activity:activity-compose", version.ref = "androidx-compose-activity" }
+compose-ui-backhandler = { module = "org.jetbrains.compose.ui:ui-backhandler", version.ref = "compose-multiplatform" }
 
 # Kodein extension
 kodein = { module = "org.kodein.di:kodein-di-framework-compose", version.ref = "kodein" }
