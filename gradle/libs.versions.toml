@@ -1,46 +1,42 @@
 [versions]
-agp = "8.7.3"
-kotlin = "2.1.21"
+agp = "9.3.2"
+kotlin = "2.4.10"
+# Sdks
 android-minSdk = "21"
-android-compileSdk = "36"
-android-targetSdk = "36"
-compose-multiplatform = "1.8.1"
-androidx-compose-activity = "1.10.1"
+android-koin-minSdk = "23"
+android-kodein-minSdk = "23"
+android-compileSdk = "37"
+# Compose multiplatform
+compose-multiplatform = "1.12.0"
+compose-multiplatform-material3 = "1.9.0"
+# Android specific
+androidx-compose-activity = "1.13.0"
 # Kodein extension
-kodein = "7.21.2"
+kodein = "7.33.0"
 # Koin extension
-koin = "4.0.4"
-# Samples
-compose = "1.8.2"
-material3 = "1.3.2"
-lifecycle-kmp = "2.8.4"
+koin = "4.2.2"
+# Publishing
 publish = "0.31.0"
 
 [libraries]
-compose-activity = { module = "androidx.activity:activity-compose", version.ref = "androidx-compose-activity" }
+# Compose
+compose-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "compose-multiplatform-material3" }
+compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "compose-multiplatform" }
+compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "compose-multiplatform" }
+compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "compose-multiplatform" }
+compose-components-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "compose-multiplatform" }
 compose-ui-backhandler = { module = "org.jetbrains.compose.ui:ui-backhandler", version.ref = "compose-multiplatform" }
+compose-activity = { module = "androidx.activity:activity-compose", version.ref = "androidx-compose-activity" }
 
 # Kodein extension
-kodein = { module = "org.kodein.di:kodein-di-framework-compose", version.ref = "kodein" }
+kodein = { module = "org.kodein.di:kodein-di-framework-compose-runtime", version.ref = "kodein" }
 
 # Koin extension
 koin-compose = { module = "io.insert-koin:koin-compose", version.ref = "koin" }
 
-# Samples
-koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
-koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin" }
-compose-ui = { module = "androidx.compose.ui:ui", version.ref = "compose" }
-compose-material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
-lifecycle-kmp = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle-kmp" }
-
 [plugins]
-androidLibrary = { id = "com.android.library", version.ref = "agp" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 vanniktech-mavenPublish = { id = "com.vanniktech.maven.publish", version.ref = "publish" }
 composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-
-# Samples
-androidApplication = { id = "com.android.application", version.ref = "agp" }
-kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
-kotlinParcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
+androidMultiplatformLibrary = {id="com.android.kotlin.multiplatform.library", version.ref="agp"}
