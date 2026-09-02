@@ -28,5 +28,5 @@ class HomeScreen : Screen {
 ```
 
 
-!!! info "You can find source code for a working example [here](https://github.com/hristogochev/vortex/blob/main/samples/sample/src/commonMain/kotlin/io/github/hristogochev/vortex/sample/koinIntegration/KoinIntegration.kt)."
+!!! info "You can find source code for a working example [here](https://github.com/hristogochev/vortex/blob/main/sample/shared/src/commonMain/kotlin/io/github/hristogochev/vortex/sample/koinIntegration/KoinIntegration.kt)."
 

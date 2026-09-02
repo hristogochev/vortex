@@ -46,5 +46,5 @@ The available events are:
 * `Pop`: whenever `pop` and `popAll` are called
 * `Idle`: default event
 
-!!! info "You can find source code for a working example [here](https://github.com/hristogochev/vortex/blob/main/samples/sample/src/commonMain/kotlin/io/github/hristogochev/vortex/sample/stateStack/StateStackExample.kt)."
+!!! info "You can find source code for a working example [here](https://github.com/hristogochev/vortex/blob/main/sample/shared/src/commonMain/kotlin/io/github/hristogochev/vortex/sample/stateStack/StateStackExample.kt)."
 
