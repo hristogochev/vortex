@@ -4,11 +4,12 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat.Msi
 import org.jetbrains.compose.desktop.application.tasks.AbstractNativeMacApplicationPackageTask
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsTargetDsl
 import java.util.Locale
 
 plugins {
-    alias(libs.plugins.androidApplication)
     alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.androidMultiplatformLibrary)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.kotlinParcelize)
@@ -18,28 +19,39 @@ plugins {
 kotlin {
 
     // Android
-    androidTarget {
+    android {
+        namespace = "io.github.hristogochev.vortex.sample"
+        compileSdk = libs.versions.android.compileSdk.get().toInt()
+        minSdk = libs.versions.android.minSdk.get().toInt()
+
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_1_8)
+            jvmTarget.set(JvmTarget.JVM_11)
             freeCompilerArgs.addAll(
                 "-P",
                 "plugin:org.jetbrains.kotlin.parcelize:additionalAnnotation=io.github.hristogochev.vortex.sample.util.Parcelize"
             )
         }
-    }
 
-    // Desktop
-    jvm("desktop")
+        androidResources {
+            enable = true
+        }
+    }
 
     // iOS
     listOf(
-        iosX64(),
         iosArm64(),
         iosSimulatorArm64()
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
-            baseName = "ComposeApp"
+            baseName = "shared"
             isStatic = true
+        }
+    }
+
+    // Desktop
+    jvm("desktop") {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_11)
         }
     }
 
@@ -47,17 +59,17 @@ kotlin {
     @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
     wasmJs {
         browser()
-        binaries.executable()
+//        binaries.executable()
     }
 
     // JS
-    js(IR) {
+    js {
         browser()
-        binaries.executable()
+//        binaries.executable()
     }
 
     // Native Macos experimental
-    val macOsConfiguration: KotlinNativeTarget.() -> Unit = {
+    macosArm64 {
         binaries {
             executable {
                 entryPoint = "main"
@@ -67,17 +79,16 @@ kotlin {
             }
         }
     }
-    macosX64(macOsConfiguration)
-    macosArm64(macOsConfiguration)
 
     sourceSets {
 
-        val desktopMain by getting
+        val desktopMain = getByName("desktopMain")
 
         commonMain.dependencies {
-            implementation(compose.material3)
-            implementation(compose.runtime)
-            implementation(compose.materialIconsExtended)
+            implementation(libs.compose.runtime)
+            implementation(libs.compose.material3)
+            implementation(libs.compose.material.icons.extended)
+
 
             implementation(libs.kodein)
             implementation(libs.koin.compose)
@@ -85,17 +96,9 @@ kotlin {
 
             implementation(libs.lifecycle.kmp)
 
-            implementation(project(":vortex"))
-            implementation(project(":vortex-koin"))
-            implementation(project(":vortex-kodein"))
-        }
-
-        androidMain.dependencies {
-            implementation(libs.compose.activity)
-            implementation(libs.compose.ui)
-            implementation(libs.compose.material3)
-
-            implementation(libs.koin.android)
+            implementation("io.github.hristogochev:vortex:0.3.0")
+            implementation("io.github.hristogochev:vortex-koin:0.3.0")
+            implementation("io.github.hristogochev:vortex-kodein:0.3.0")
         }
 
         desktopMain.dependencies {
@@ -104,21 +107,7 @@ kotlin {
     }
 }
 
-android {
-    namespace = "io.github.hristogochev.vortex.sample"
-    compileSdk = libs.versions.android.compileSdk.get().toInt()
 
-    defaultConfig {
-        applicationId = "io.github.hristogochev.vortex.sample"
-        minSdk = libs.versions.android.minSdk.get().toInt()
-        targetSdk = libs.versions.android.targetSdk.get().toInt()
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
-}
 compose.desktop {
     application {
         mainClass = "io.github.hristogochev.vortex.sample.MainKt"
@@ -131,9 +120,9 @@ compose.desktop {
 }
 
 
-// Native Macos experimental
+//// Native Macos experimental
 compose.desktop.nativeApplication {
-    targets(kotlin.targets.getByName("macosX64"), kotlin.targets.getByName("macosArm64"))
+    targets(kotlin.targets.getByName("macosArm64"))
     distributions {
         targetFormats(Dmg)
         packageName = "VortexSample"
@@ -144,29 +133,27 @@ compose.desktop.nativeApplication {
 
 afterEvaluate {
     val baseTask = "createDistributableNative"
-    val architectures = listOf("macosX64", "macosArm64")
     val buildTypes = listOf("debug", "release")
 
-    architectures.forEach { architecture ->
-        buildTypes.forEach buildTypeForEach@{ buildType ->
-            val createAppTaskName = baseTask + buildType.capitalize() + architecture.capitalize()
+    val architecture = "macosArm64"
+    buildTypes.forEach buildTypeForEach@{ buildType ->
+        val createAppTaskName = baseTask + buildType.capitalize() + architecture.capitalize()
 
-            val createAppTask =
-                tasks.findByName(createAppTaskName) as? AbstractNativeMacApplicationPackageTask?
-                    ?: return@buildTypeForEach
+        val createAppTask =
+            tasks.findByName(createAppTaskName) as? AbstractNativeMacApplicationPackageTask?
+                ?: return@buildTypeForEach
 
-            val destinationDir = createAppTask.destinationDir.get().asFile
-            val packageName = createAppTask.packageName.get()
+        val destinationDir = createAppTask.destinationDir.get().asFile
+        val packageName = createAppTask.packageName.get()
 
-            tasks.create("runNative${architecture.capitalize()}${buildType.capitalize()}") {
-                group = createAppTask.group
-                dependsOn(createAppTaskName)
-                doLast {
-                    ProcessBuilder(
-                        "open",
-                        destinationDir.absolutePath + "/" + packageName + ".app"
-                    ).start().waitFor()
-                }
+        tasks.create("runNative${architecture.capitalize()}${buildType.capitalize()}") {
+            group = createAppTask.group
+            dependsOn(createAppTaskName)
+            doLast {
+                ProcessBuilder(
+                    "open",
+                    destinationDir.absolutePath + "/" + packageName + ".app"
+                ).start().waitFor()
             }
         }
     }
@@ -179,4 +166,14 @@ private fun String.capitalize(): String {
         else it.toString()
     }
 }
+
+
+tasks.matching {
+    it.name == "checkComposeUiTestConfigurationForJs" ||
+            it.name == "checkComposeUiTestConfigurationForWasmJs"
+}.configureEach {
+    enabled = false
+}
+
+
 

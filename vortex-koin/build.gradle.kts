@@ -4,7 +4,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.androidMultiplatformLibrary)
     alias(libs.plugins.vanniktech.mavenPublish)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeMultiplatform)
@@ -13,10 +13,20 @@ plugins {
 kotlin {
     explicitApi = ExplicitApiMode.Strict
 
-    androidTarget {
-        publishLibraryVariants("release")
+    android {
+        namespace = "io.github.hristogochev.vortex.koin"
+        compileSdk = libs.versions.android.compileSdk.get().toInt()
+        minSdk = libs.versions.android.koin.minSdk.get().toInt()
+
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_1_8)
+            jvmTarget.set(JvmTarget.JVM_11)
+        }
+
+        optimization {
+            consumerKeepRules.apply {
+                publish = true
+                file("consumer-rules.pro")
+            }
         }
     }
 
@@ -27,19 +37,15 @@ kotlin {
         }
     }
 
-    iosX64()
     iosArm64()
     iosSimulatorArm64()
 
-    macosX64()
     macosArm64()
 
     @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
     wasmJs { browser() }
 
-    js(IR) {
-        browser()
-    }
+    js { browser() }
 
     sourceSets {
         commonMain.dependencies {
@@ -49,18 +55,7 @@ kotlin {
     }
 }
 
-android {
-    namespace = "io.github.hristogochev.vortex.koin"
-    compileSdk = libs.versions.android.compileSdk.get().toInt()
-    defaultConfig {
-        minSdk = libs.versions.android.minSdk.get().toInt()
-        consumerProguardFiles("consumer-rules.pro")
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
-}
+
 
 mavenPublishing {
     publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
@@ -97,4 +92,9 @@ mavenPublishing {
     }
 }
 
-
+tasks.matching {
+    it.name == "checkComposeUiTestConfigurationForJs" ||
+            it.name == "checkComposeUiTestConfigurationForWasmJs"
+}.configureEach {
+    enabled = false
+}

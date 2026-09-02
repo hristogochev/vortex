@@ -2,41 +2,46 @@
 agp = "9.3.2"
 kotlin = "2.4.10"
 # Sdks
-android-minSdk = "21"
-android-koin-minSdk = "23"
-android-kodein-minSdk = "23"
+android-minSdk = "23"
 android-compileSdk = "37"
+android-targetSdk = "37"
 # Compose multiplatform
 compose-multiplatform = "1.12.0"
 compose-multiplatform-material3 = "1.9.0"
+compose-multiplatform-material-icons-extended = "1.7.3"
+# Lifecycle
+lifecycle-kmp = "2.11.0"
 # Android specific
 androidx-compose-activity = "1.13.0"
 # Kodein extension
 kodein = "7.33.0"
 # Koin extension
 koin = "4.2.2"
-# Publishing
-publish = "0.31.0"
+
 
 [libraries]
 # Compose
+compose-material-icons-extended = { module = "org.jetbrains.compose.material:material-icons-extended", version.ref = "compose-multiplatform-material-icons-extended" }
 compose-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "compose-multiplatform-material3" }
 compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "compose-multiplatform" }
-compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "compose-multiplatform" }
-compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "compose-multiplatform" }
-compose-components-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "compose-multiplatform" }
-compose-ui-backhandler = { module = "org.jetbrains.compose.ui:ui-backhandler", version.ref = "compose-multiplatform" }
+
+# Lifecycle
+lifecycle-kmp = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle-kmp" }
+
+# Android specific
 compose-activity = { module = "androidx.activity:activity-compose", version.ref = "androidx-compose-activity" }
 
 # Kodein extension
 kodein = { module = "org.kodein.di:kodein-di-framework-compose-runtime", version.ref = "kodein" }
 
 # Koin extension
+koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
 koin-compose = { module = "io.insert-koin:koin-compose", version.ref = "koin" }
 
 [plugins]
+androidApplication = { id = "com.android.application", version.ref = "agp" }
+androidMultiplatformLibrary = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
+kotlinParcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
-vanniktech-mavenPublish = { id = "com.vanniktech.maven.publish", version.ref = "publish" }
 composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-androidMultiplatformLibrary = {id="com.android.kotlin.multiplatform.library", version.ref="agp"}

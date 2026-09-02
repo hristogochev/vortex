@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="io.github.hristogochev.vortex.sample">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application
-        android:name="io.github.hristogochev.vortex.sample.AndroidApp"
+        android:name="io.github.hristogochev.vortex.sample.androidApp.AndroidApp"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="Vortex Sample Test"
@@ -12,7 +11,7 @@
         android:enableOnBackInvokedCallback="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name="io.github.hristogochev.vortex.sample.MainActivity"
+            android:name="io.github.hristogochev.vortex.sample.androidApp.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
