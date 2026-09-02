@@ -19,4 +19,3 @@ rootProject.name = "Vortex"
 include(":vortex")
 include(":vortex-koin")
 include(":vortex-kodein")
-//include(":samples:sample")
