@@ -1,4 +1,4 @@
-package io.github.hristogochev.vortex.sample
+package io.github.hristogochev.vortex.sample.androidApp
 
 import android.app.Application
 import io.github.hristogochev.vortex.sample.kodeinIntegration.initKodein
