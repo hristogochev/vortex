@@ -80,8 +80,10 @@ public fun CurrentScreenPredictiveBack(
         }
     }
 
-    // Make sure the transition state's target state is always the state of the latest screen
-    val transitionState = remember {
+    // Recreated on every settle so a new gesture never seeks a stale Transition tree
+    var transitionGeneration by remember { mutableStateOf(0) }
+
+    val transitionState = remember(transitionGeneration) {
         SeekableTransitionState(navigator.current)
     }
 
@@ -89,6 +91,7 @@ public fun CurrentScreenPredictiveBack(
 
     LaunchedEffect(navigator.current) {
         transitionState.animateTo(navigator.current)
+        transitionGeneration++
     }
 
     val prevScreen by remember(navigator.current) {
@@ -144,6 +147,7 @@ public fun CurrentScreenPredictiveBack(
                                             if (value == 0f) {
                                                 isInPredictiveBack = false
                                                 transitionState.snapTo(navigator.current)
+                                                transitionGeneration++
                                             }
                                         }
                                     }
