@@ -16,7 +16,7 @@ kotlin {
     android {
         namespace = "io.github.hristogochev.vortex.koin"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
-        minSdk = libs.versions.android.koin.minSdk.get().toInt()
+        minSdk = libs.versions.android.minSdk.get().toInt()
 
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)

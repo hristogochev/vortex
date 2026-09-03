@@ -2,9 +2,7 @@
 agp = "9.3.2"
 kotlin = "2.4.10"
 # Sdks
-android-minSdk = "21"
-android-koin-minSdk = "23"
-android-kodein-minSdk = "23"
+android-minSdk = "23"
 android-compileSdk = "37"
 # Compose multiplatform
 compose-multiplatform = "1.12.0"
