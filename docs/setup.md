@@ -14,7 +14,7 @@
 
     ```kotlin
   
-    val vortexVersion = "0.3.0"
+    val vortexVersion = "0.4.0"
         
     // Main library
     implementation("io.github.hristogochev:vortex:$vortexVersion")
@@ -31,7 +31,7 @@
 
     ```toml
     [versions]
-    vortex = "0.3.0"
+    vortex = "0.4.0"
     
     [libraries]
     // Main library

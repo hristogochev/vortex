@@ -60,7 +60,9 @@ kotlin {
 mavenPublishing {
     publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
 
-    signAllPublications()
+    if (gradle.startParameter.taskNames.any { it.contains("MavenCentral", ignoreCase = true) }) {
+        signAllPublications()
+    }
 
     coordinates(group.toString(), "vortex-koin", version.toString())
 

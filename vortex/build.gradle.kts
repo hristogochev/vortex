@@ -13,7 +13,7 @@ plugins {
 kotlin {
     explicitApi = ExplicitApiMode.Strict
 
-    android{
+    android {
         namespace = "io.github.hristogochev.vortex"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
@@ -57,10 +57,8 @@ kotlin {
         commonMain.dependencies {
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
-            implementation(libs.compose.material3)
             implementation(libs.compose.ui)
             implementation(libs.compose.ui.backhandler)
-            implementation(libs.compose.components.resources)
         }
 
         desktopMain.dependencies {
@@ -74,7 +72,9 @@ kotlin {
 mavenPublishing {
     publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
 
-    signAllPublications()
+    if (gradle.startParameter.taskNames.any { it.contains("MavenCentral", ignoreCase = true) }) {
+        signAllPublications()
+    }
 
     coordinates(group.toString(), "vortex", version.toString())
 
