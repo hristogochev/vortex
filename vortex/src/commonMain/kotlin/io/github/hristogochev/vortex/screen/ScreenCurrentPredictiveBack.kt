@@ -158,15 +158,11 @@ public fun CurrentScreenPredictiveBack(
                 }.collect()
         })
 
-    var currentContentTransform by remember { mutableStateOf<ContentTransform?>(null) }
-
     val stateHolder = LocalNavigatorStateHolder.currentOrThrow
 
     // This updates when the transition is done
     if (transition.currentState == transition.targetState) {
         LaunchedEffect(transition.currentState) {
-            currentContentTransform?.targetContentZIndex = 0f
-
             // We perform a check again, we remove all from the unexpected queue that are actually expected
             val currentScreenStateKeys = navigator.items.map { "${it.key}:${navigator.key}" }
 
@@ -204,14 +200,16 @@ public fun CurrentScreenPredictiveBack(
                 else -> targetState.onAppearTransition ?: defaultOnScreenAppearTransition
             }
 
+            // AnimatedContent freezes a screen's zIndex at the value it entered with, so the depth
+            // is used to order them, with any declared zIndex applied on top of it as an offset
+            val targetDepth = navigator.items.indexOf(targetState).coerceAtLeast(0).toFloat()
+
             ContentTransform(
                 targetContentEnter = transition?.enter() ?: EnterTransition.None,
                 initialContentExit = transition?.exit() ?: ExitTransition.None,
-                targetContentZIndex = transition?.zIndex ?: 0f,
+                targetContentZIndex = targetDepth + (transition?.zIndex ?: 0f),
                 sizeTransform = transition?.sizeTransform() ?: SizeTransform()
-            ).also {
-                currentContentTransform = it
-            }
+            )
         },
         contentAlignment = contentAlignment,
         contentKey = contentKey,
