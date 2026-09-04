@@ -159,6 +159,39 @@ public fun CurrentScreenPredictiveBack(
         })
 
     var currentContentTransform by remember { mutableStateOf<ContentTransform?>(null) }
+
+    val stateHolder = LocalNavigatorStateHolder.currentOrThrow
+
+    // This updates when the transition is done
+    if (transition.currentState == transition.targetState) {
+        LaunchedEffect(transition.currentState) {
+            currentContentTransform?.targetContentZIndex = 0f
+
+            // We perform a check again, we remove all from the unexpected queue that are actually expected
+            val currentScreenStateKeys = navigator.items.map { "${it.key}:${navigator.key}" }
+
+            val unexpectedScreenStateKeys = unexpectedScreenStateKeysQueue
+                .filter { it !in currentScreenStateKeys }
+
+            if (unexpectedScreenStateKeys.isNotEmpty()) {
+
+                for (unexpectedScreenStateKey in unexpectedScreenStateKeys) {
+                    ScreenModelStore.dispose(unexpectedScreenStateKey)
+
+                    ScreenDisposableEffectStore.dispose(unexpectedScreenStateKey)
+
+                    stateHolder.removeState(unexpectedScreenStateKey)
+
+                    navigator.disassociateScreenStateKey(unexpectedScreenStateKey)
+                }
+
+                navigator.clearEvent()
+            }
+
+            unexpectedScreenStateKeysQueue = emptySet()
+        }
+    }
+
     transition.AnimatedContent(
         transitionSpec = {
             val transition = when {
@@ -184,38 +217,6 @@ public fun CurrentScreenPredictiveBack(
         contentKey = contentKey,
         modifier = modifier
     ) { screen ->
-        if (this.transition.targetState == this.transition.currentState) {
-            val stateHolder = LocalNavigatorStateHolder.currentOrThrow
-
-            // This updates when the transition is done
-            LaunchedEffect(Unit) {
-                currentContentTransform?.targetContentZIndex = 0f
-
-                // We perform a check again, we remove all from the unexpected queue that are actually expected
-                val currentScreenStateKeys = navigator.items.map { "${it.key}:${navigator.key}" }
-
-                val unexpectedScreenStateKeys = unexpectedScreenStateKeysQueue
-                    .filter { it !in currentScreenStateKeys }
-
-                if (unexpectedScreenStateKeys.isNotEmpty()) {
-
-                    for (unexpectedScreenStateKey in unexpectedScreenStateKeys) {
-                        ScreenModelStore.dispose(unexpectedScreenStateKey)
-
-                        ScreenDisposableEffectStore.dispose(unexpectedScreenStateKey)
-
-                        stateHolder.removeState(unexpectedScreenStateKey)
-
-                        navigator.disassociateScreenStateKey(unexpectedScreenStateKey)
-                    }
-
-                    navigator.clearEvent()
-                }
-
-                unexpectedScreenStateKeysQueue = emptySet()
-            }
-        }
-
         screen.render {
             content(it)
         }
