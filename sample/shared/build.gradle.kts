@@ -96,9 +96,9 @@ kotlin {
 
             implementation(libs.lifecycle.kmp)
 
-            implementation("io.github.hristogochev:vortex:0.4.0")
-            implementation("io.github.hristogochev:vortex-koin:0.4.0")
-            implementation("io.github.hristogochev:vortex-kodein:0.4.0")
+            implementation("io.github.hristogochev:vortex:0.4.1")
+            implementation("io.github.hristogochev:vortex-koin:0.4.1")
+            implementation("io.github.hristogochev:vortex-kodein:0.4.1")
         }
 
         desktopMain.dependencies {
