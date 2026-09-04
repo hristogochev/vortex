@@ -87,13 +87,19 @@ public fun CurrentScreenPredictiveBack(
 
     val transition = rememberTransition(transitionState, label = "entry")
 
-    var isInPredictiveBack by remember { mutableStateOf(false) }
+    var currentTransitionShouldBePredictiveBack by remember { mutableStateOf(false) }
 
     var isAnimatingNavigation by remember { mutableStateOf(false) }
 
     LaunchedEffect(navigator.current) {
+        // During an automatic event (push/pop/replace),
+        // transitionState.targetState lags behind navigator.current,
+        // that signals that the current transition shouldn't be a predictive back transition.
+        // During a manual predictive back transition transitionState.target doesn't lag behind,
+        // That means that currentTransitionShouldBePredictiveBack remains set to true and only gets toggled,
+        // When a manual transition takes place.
         if (transitionState.targetState != navigator.current) {
-            isInPredictiveBack = false
+            currentTransitionShouldBePredictiveBack = false
         }
         isAnimatingNavigation = true
         transitionState.animateTo(navigator.current)
@@ -132,7 +138,7 @@ public fun CurrentScreenPredictiveBack(
                     // Do not seek and follow finger if we are animating automatically with a push/pop/replace
                     if (!seeking && isAnimatingNavigation) return@onEach
                     seeking = true
-                    isInPredictiveBack = true
+                    currentTransitionShouldBePredictiveBack = true
                     transitionState.seekTo(backEvent.progress, prevScreen)
                 }.onCompletion { cause ->
                     if (!seeking) return@onCompletion
@@ -199,7 +205,7 @@ public fun CurrentScreenPredictiveBack(
     transition.AnimatedContent(
         transitionSpec = {
             val transition = when {
-                isInPredictiveBack -> initialState.predictiveBackTransition
+                currentTransitionShouldBePredictiveBack -> initialState.predictiveBackTransition
                     ?: defaultPredictiveBackTransition
 
                 navigator.lastEvent == StackEvent.Pop -> initialState.onDisappearTransition
