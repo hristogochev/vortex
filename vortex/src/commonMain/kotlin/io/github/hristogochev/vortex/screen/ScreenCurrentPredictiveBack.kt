@@ -87,6 +87,8 @@ public fun CurrentScreenPredictiveBack(
 
     val transition = rememberTransition(transitionState, label = "entry")
 
+    var isInPredictiveBack by remember { mutableStateOf(false) }
+
     LaunchedEffect(navigator.current) {
         transitionState.animateTo(navigator.current)
     }
@@ -105,8 +107,6 @@ public fun CurrentScreenPredictiveBack(
             navigator.current.canPop
         }
     }
-
-    var isInPredictiveBack by remember { mutableStateOf(false) }
 
     val coroutineScope = rememberCoroutineScope()
 
