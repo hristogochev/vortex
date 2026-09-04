@@ -6,6 +6,7 @@ import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -71,8 +72,39 @@ public fun CurrentScreen(
         }
     )
 
-    AnimatedContent(
-        targetState = navigator.current,
+    val screenTransition = updateTransition(navigator.current, label = "entry")
+
+    val stateHolder = LocalNavigatorStateHolder.currentOrThrow
+
+    // This updates when the transition is done
+    if (screenTransition.currentState == screenTransition.targetState) {
+        LaunchedEffect(screenTransition.currentState) {
+            // We perform a check again, we remove all from the unexpected queue that are actually expected
+            val currentScreenStateKeys = navigator.items.map { "${it.key}:${navigator.key}" }
+
+            val unexpectedScreenStateKeys = unexpectedScreenStateKeysQueue
+                .filter { it !in currentScreenStateKeys }
+
+            if (unexpectedScreenStateKeys.isNotEmpty()) {
+
+                for (unexpectedScreenStateKey in unexpectedScreenStateKeys) {
+                    ScreenModelStore.dispose(unexpectedScreenStateKey)
+
+                    ScreenDisposableEffectStore.dispose(unexpectedScreenStateKey)
+
+                    stateHolder.removeState(unexpectedScreenStateKey)
+
+                    navigator.disassociateScreenStateKey(unexpectedScreenStateKey)
+                }
+
+                navigator.clearEvent()
+            }
+
+            unexpectedScreenStateKeysQueue = emptySet()
+        }
+    }
+
+    screenTransition.AnimatedContent(
         transitionSpec = {
 
             val transition = when (navigator.lastEvent) {
@@ -93,36 +125,6 @@ public fun CurrentScreen(
         contentKey = contentKey,
         modifier = modifier
     ) { screen ->
-        if (this.transition.targetState == this.transition.currentState) {
-            val stateHolder = LocalNavigatorStateHolder.currentOrThrow
-
-            // This updates when the transition is done
-            LaunchedEffect(Unit) {
-                // We perform a check again, we remove all from the unexpected queue that are actually expected
-                val currentScreenStateKeys = navigator.items.map { "${it.key}:${navigator.key}" }
-
-                val unexpectedScreenStateKeys = unexpectedScreenStateKeysQueue
-                    .filter { it !in currentScreenStateKeys }
-
-                if (unexpectedScreenStateKeys.isNotEmpty()) {
-
-                    for (unexpectedScreenStateKey in unexpectedScreenStateKeys) {
-                        ScreenModelStore.dispose(unexpectedScreenStateKey)
-
-                        ScreenDisposableEffectStore.dispose(unexpectedScreenStateKey)
-
-                        stateHolder.removeState(unexpectedScreenStateKey)
-
-                        navigator.disassociateScreenStateKey(unexpectedScreenStateKey)
-                    }
-
-                    navigator.clearEvent()
-                }
-
-                unexpectedScreenStateKeysQueue = emptySet()
-            }
-        }
-
         screen.render {
             content(it)
         }

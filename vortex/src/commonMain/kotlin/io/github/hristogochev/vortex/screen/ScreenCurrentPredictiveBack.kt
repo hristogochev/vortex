@@ -80,18 +80,30 @@ public fun CurrentScreenPredictiveBack(
         }
     }
 
-    // Recreated on every settle so a new gesture never seeks a stale Transition tree
-    var transitionGeneration by remember { mutableStateOf(0) }
-
-    val transitionState = remember(transitionGeneration) {
+    // Make sure the transition state's target state is always the state of the latest screen
+    val transitionState = remember {
         SeekableTransitionState(navigator.current)
     }
 
     val transition = rememberTransition(transitionState, label = "entry")
 
+    var currentTransitionShouldBePredictiveBack by remember { mutableStateOf(false) }
+
+    var isAnimatingNavigation by remember { mutableStateOf(false) }
+
     LaunchedEffect(navigator.current) {
+        // During an automatic event (push/pop/replace),
+        // transitionState.targetState lags behind navigator.current,
+        // that signals that the current transition shouldn't be a predictive back transition.
+        // During a manual predictive back transition transitionState.target doesn't lag behind,
+        // That means that currentTransitionShouldBePredictiveBack remains set to true and only gets toggled,
+        // When a manual transition takes place.
+        if (transitionState.targetState != navigator.current) {
+            currentTransitionShouldBePredictiveBack = false
+        }
+        isAnimatingNavigation = true
         transitionState.animateTo(navigator.current)
-        transitionGeneration++
+        isAnimatingNavigation = false
     }
 
     val prevScreen by remember(navigator.current) {
@@ -109,8 +121,6 @@ public fun CurrentScreenPredictiveBack(
         }
     }
 
-    var isInPredictiveBack by remember { mutableStateOf(false) }
-
     val coroutineScope = rememberCoroutineScope()
 
     PredictiveBackHandler(
@@ -118,19 +128,23 @@ public fun CurrentScreenPredictiveBack(
         onBack = onBack@{ progress ->
             val prevScreen = prevScreen ?: return@onBack
 
+            // Whether this gesture ever drove a transition
+            var seeking = false
+
             progress
                 .filter { backEvent ->
                     swipeSides.contains(backEvent.swipeEdge)
                 }.onEach { backEvent ->
-                    if (!isInPredictiveBack && transitionState.fraction > 0) return@onEach
-                    isInPredictiveBack = true
+                    // Do not seek and follow finger if we are animating automatically with a push/pop/replace
+                    if (!seeking && isAnimatingNavigation) return@onEach
+                    seeking = true
+                    currentTransitionShouldBePredictiveBack = true
                     transitionState.seekTo(backEvent.progress, prevScreen)
                 }.onCompletion { cause ->
-                    if (!isInPredictiveBack) return@onCompletion
+                    if (!seeking) return@onCompletion
                     when (cause) {
                         null -> {
                             navigator.pop()
-                            isInPredictiveBack = false
                         }
 
                         is CancellationException -> {
@@ -145,9 +159,7 @@ public fun CurrentScreenPredictiveBack(
                                         mutex.withLock {
                                             transitionState.seekTo(value)
                                             if (value == 0f) {
-                                                isInPredictiveBack = false
                                                 transitionState.snapTo(navigator.current)
-                                                transitionGeneration++
                                             }
                                         }
                                     }
@@ -155,18 +167,45 @@ public fun CurrentScreenPredictiveBack(
                             }
                         }
 
-                        else -> {
-                            isInPredictiveBack = false
-                        }
+                        else -> Unit
                     }
                 }.collect()
         })
 
-    var currentContentTransform by remember { mutableStateOf<ContentTransform?>(null) }
+    val stateHolder = LocalNavigatorStateHolder.currentOrThrow
+
+    // This updates when the transition is done
+    if (transition.currentState == transition.targetState) {
+        LaunchedEffect(transition.currentState) {
+            // We perform a check again, we remove all from the unexpected queue that are actually expected
+            val currentScreenStateKeys = navigator.items.map { "${it.key}:${navigator.key}" }
+
+            val unexpectedScreenStateKeys = unexpectedScreenStateKeysQueue
+                .filter { it !in currentScreenStateKeys }
+
+            if (unexpectedScreenStateKeys.isNotEmpty()) {
+
+                for (unexpectedScreenStateKey in unexpectedScreenStateKeys) {
+                    ScreenModelStore.dispose(unexpectedScreenStateKey)
+
+                    ScreenDisposableEffectStore.dispose(unexpectedScreenStateKey)
+
+                    stateHolder.removeState(unexpectedScreenStateKey)
+
+                    navigator.disassociateScreenStateKey(unexpectedScreenStateKey)
+                }
+
+                navigator.clearEvent()
+            }
+
+            unexpectedScreenStateKeysQueue = emptySet()
+        }
+    }
+
     transition.AnimatedContent(
         transitionSpec = {
             val transition = when {
-                isInPredictiveBack -> initialState.predictiveBackTransition
+                currentTransitionShouldBePredictiveBack -> initialState.predictiveBackTransition
                     ?: defaultPredictiveBackTransition
 
                 navigator.lastEvent == StackEvent.Pop -> initialState.onDisappearTransition
@@ -175,51 +214,21 @@ public fun CurrentScreenPredictiveBack(
                 else -> targetState.onAppearTransition ?: defaultOnScreenAppearTransition
             }
 
+            // AnimatedContent freezes a screen's zIndex at the value it entered with, so the depth
+            // is used to order them, with any declared zIndex applied on top of it as an offset
+            val targetDepth = navigator.items.indexOf(targetState).coerceAtLeast(0).toFloat()
+
             ContentTransform(
                 targetContentEnter = transition?.enter() ?: EnterTransition.None,
                 initialContentExit = transition?.exit() ?: ExitTransition.None,
-                targetContentZIndex = transition?.zIndex ?: 0f,
+                targetContentZIndex = targetDepth + (transition?.zIndex ?: 0f),
                 sizeTransform = transition?.sizeTransform() ?: SizeTransform()
-            ).also {
-                currentContentTransform = it
-            }
+            )
         },
         contentAlignment = contentAlignment,
         contentKey = contentKey,
         modifier = modifier
     ) { screen ->
-        if (this.transition.targetState == this.transition.currentState) {
-            val stateHolder = LocalNavigatorStateHolder.currentOrThrow
-
-            // This updates when the transition is done
-            LaunchedEffect(Unit) {
-                currentContentTransform?.targetContentZIndex = 0f
-
-                // We perform a check again, we remove all from the unexpected queue that are actually expected
-                val currentScreenStateKeys = navigator.items.map { "${it.key}:${navigator.key}" }
-
-                val unexpectedScreenStateKeys = unexpectedScreenStateKeysQueue
-                    .filter { it !in currentScreenStateKeys }
-
-                if (unexpectedScreenStateKeys.isNotEmpty()) {
-
-                    for (unexpectedScreenStateKey in unexpectedScreenStateKeys) {
-                        ScreenModelStore.dispose(unexpectedScreenStateKey)
-
-                        ScreenDisposableEffectStore.dispose(unexpectedScreenStateKey)
-
-                        stateHolder.removeState(unexpectedScreenStateKey)
-
-                        navigator.disassociateScreenStateKey(unexpectedScreenStateKey)
-                    }
-
-                    navigator.clearEvent()
-                }
-
-                unexpectedScreenStateKeysQueue = emptySet()
-            }
-        }
-
         screen.render {
             content(it)
         }
