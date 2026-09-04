@@ -89,11 +89,15 @@ public fun CurrentScreenPredictiveBack(
 
     var isInPredictiveBack by remember { mutableStateOf(false) }
 
+    var isAnimatingNavigation by remember { mutableStateOf(false) }
+
     LaunchedEffect(navigator.current) {
         if (transitionState.targetState != navigator.current) {
             isInPredictiveBack = false
         }
+        isAnimatingNavigation = true
         transitionState.animateTo(navigator.current)
+        isAnimatingNavigation = false
     }
 
     val prevScreen by remember(navigator.current) {
@@ -125,7 +129,8 @@ public fun CurrentScreenPredictiveBack(
                 .filter { backEvent ->
                     swipeSides.contains(backEvent.swipeEdge)
                 }.onEach { backEvent ->
-                    if (!seeking && transitionState.fraction > 0) return@onEach
+                    // Do not seek and follow finger if we are animating automatically with a push/pop/replace
+                    if (!seeking && isAnimatingNavigation) return@onEach
                     seeking = true
                     isInPredictiveBack = true
                     transitionState.seekTo(backEvent.progress, prevScreen)
