@@ -90,6 +90,9 @@ public fun CurrentScreenPredictiveBack(
     var isInPredictiveBack by remember { mutableStateOf(false) }
 
     LaunchedEffect(navigator.current) {
+        if (transitionState.targetState != navigator.current) {
+            isInPredictiveBack = false
+        }
         transitionState.animateTo(navigator.current)
     }
 
@@ -115,19 +118,22 @@ public fun CurrentScreenPredictiveBack(
         onBack = onBack@{ progress ->
             val prevScreen = prevScreen ?: return@onBack
 
+            // Whether this gesture ever drove a transition
+            var seeking = false
+
             progress
                 .filter { backEvent ->
                     swipeSides.contains(backEvent.swipeEdge)
                 }.onEach { backEvent ->
-                    if (!isInPredictiveBack && transitionState.fraction > 0) return@onEach
+                    if (!seeking && transitionState.fraction > 0) return@onEach
+                    seeking = true
                     isInPredictiveBack = true
                     transitionState.seekTo(backEvent.progress, prevScreen)
                 }.onCompletion { cause ->
-                    if (!isInPredictiveBack) return@onCompletion
+                    if (!seeking) return@onCompletion
                     when (cause) {
                         null -> {
                             navigator.pop()
-                            isInPredictiveBack = false
                         }
 
                         is CancellationException -> {
@@ -142,7 +148,6 @@ public fun CurrentScreenPredictiveBack(
                                         mutex.withLock {
                                             transitionState.seekTo(value)
                                             if (value == 0f) {
-                                                isInPredictiveBack = false
                                                 transitionState.snapTo(navigator.current)
                                             }
                                         }
@@ -151,9 +156,7 @@ public fun CurrentScreenPredictiveBack(
                             }
                         }
 
-                        else -> {
-                            isInPredictiveBack = false
-                        }
+                        else -> Unit
                     }
                 }.collect()
         })
