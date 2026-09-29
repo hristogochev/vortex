@@ -23,7 +23,6 @@ import io.github.hristogochev.vortex.model.ScreenModelStore
 import io.github.hristogochev.vortex.navigator.LocalNavigatorStateHolder
 import io.github.hristogochev.vortex.navigator.Navigator
 import io.github.hristogochev.vortex.stack.StackEvent
-import io.github.hristogochev.vortex.stack.isDisposableEvent
 import io.github.hristogochev.vortex.util.BackHandler
 import io.github.hristogochev.vortex.util.currentOrThrow
 
@@ -96,8 +95,6 @@ public fun CurrentScreen(
 
                     navigator.disassociateScreenStateKey(unexpectedScreenStateKey)
                 }
-
-                navigator.clearEvent()
             }
 
             unexpectedScreenStateKeysQueue = emptySet()
@@ -174,10 +171,6 @@ public fun CurrentScreenNoTransitionsDisposable(navigator: Navigator) {
         onDispose {
             val currentScreenStateKeys = navigator.items.map { "${it.key}:${navigator.key}" }
 
-            if (!navigator.lastEvent.isDisposableEvent()) {
-                return@onDispose
-            }
-
             val unexpectedScreenStateKeys =
                 oldScreenStateKeys.filter { it !in currentScreenStateKeys }
 
@@ -190,8 +183,6 @@ public fun CurrentScreenNoTransitionsDisposable(navigator: Navigator) {
 
                 navigator.disassociateScreenStateKey(unexpectedScreenStateKey)
             }
-
-            navigator.clearEvent()
         }
     }
 }

@@ -118,8 +118,6 @@ public fun Navigator(
                     }
                     ScreenModelStore.dispose(navigatorUpdatedState.key)
 
-                    navigatorUpdatedState.clearEvent()
-
                     navigatorSaverDisposeUpdatedState(navigatorUpdatedState)
                 }
             }
@@ -141,8 +139,6 @@ public fun Navigator(
                         navigatorUpdatedState.disassociateScreenStateKey(screenStateKey)
                     }
                     ScreenModelStore.dispose(navigatorUpdatedState.key)
-
-                    navigatorUpdatedState.clearEvent()
 
                     navigatorSaverDisposeUpdatedState(navigatorUpdatedState)
                 }
