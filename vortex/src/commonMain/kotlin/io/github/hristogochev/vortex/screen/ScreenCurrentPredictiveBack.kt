@@ -91,6 +91,9 @@ public fun CurrentScreenPredictiveBack(
 
     var isAnimatingNavigation by remember { mutableStateOf(false) }
 
+    // The zIndex each screen gets when it comes in
+    val screenZIndices = remember { mutableMapOf<String, Float>() }
+
     LaunchedEffect(navigator.current) {
         // During an automatic event (push/pop/replace),
         // transitionState.targetState lags behind navigator.current,
@@ -99,7 +102,33 @@ public fun CurrentScreenPredictiveBack(
         // That means that currentTransitionShouldBePredictiveBack remains set to true and only gets toggled,
         // When a manual transition takes place.
         if (transitionState.targetState != navigator.current) {
+            // Automatic event here, (push/pop/replace).
+            // navigator.current is the new screen, while transitionState.targetState is the one being on top
             currentTransitionShouldBePredictiveBack = false
+
+            when (navigator.lastEvent) {
+                StackEvent.Push, StackEvent.Replace, StackEvent.Idle -> {
+                    val currentScreenZIndex = screenZIndices[transitionState.targetState.key] ?: 0f
+                    val newScreenZIndex = screenZIndices[navigator.current.key]
+                    screenZIndices[navigator.current.key] =
+                        if (newScreenZIndex != null && newScreenZIndex > currentScreenZIndex) {
+                            newScreenZIndex
+                        } else {
+                            currentScreenZIndex + 1f
+                        }
+                }
+
+                StackEvent.Pop -> {
+                    val currentScreenZIndex = screenZIndices[transitionState.targetState.key] ?: 0f
+                    val newScreenZIndex = screenZIndices[navigator.current.key]
+                    screenZIndices[navigator.current.key] =
+                        if (newScreenZIndex != null && newScreenZIndex < currentScreenZIndex) {
+                            newScreenZIndex
+                        } else {
+                            currentScreenZIndex - 1f
+                        }
+                }
+            }
         }
         isAnimatingNavigation = true
         transitionState.animateTo(navigator.current)
@@ -137,6 +166,17 @@ public fun CurrentScreenPredictiveBack(
                 }.onEach { backEvent ->
                     // Do not seek and follow finger if we are animating automatically with a push/pop/replace
                     if (!seeking && isAnimatingNavigation) return@onEach
+                    if (!seeking) {
+                        // Once per swipe, before the transition starts: the screen being revealed goes below the current one
+                        val currentScreenZIndex = screenZIndices[navigator.current.key] ?: 0f
+                        val prevScreenZIndex = screenZIndices[prevScreen.key]
+                        screenZIndices[prevScreen.key] =
+                            if (prevScreenZIndex != null && prevScreenZIndex < currentScreenZIndex) {
+                                prevScreenZIndex
+                            } else {
+                                currentScreenZIndex - 1f
+                            }
+                    }
                     seeking = true
                     currentTransitionShouldBePredictiveBack = true
                     transitionState.seekTo(backEvent.progress, prevScreen)
@@ -212,14 +252,13 @@ public fun CurrentScreenPredictiveBack(
                 else -> targetState.onAppearTransition ?: defaultOnScreenAppearTransition
             }
 
-            // AnimatedContent freezes a screen's zIndex at the value it entered with, so the depth
-            // is used to order them, with any declared zIndex applied on top of it as an offset
-            val targetDepth = navigator.items.indexOf(targetState).coerceAtLeast(0).toFloat()
+            // AnimatedContent freezes a screen's zIndex at the value it entered with
+            val targetScreenZIndex = screenZIndices[targetState.key] ?: 0f
 
             ContentTransform(
                 targetContentEnter = transition?.enter() ?: EnterTransition.None,
                 initialContentExit = transition?.exit() ?: ExitTransition.None,
-                targetContentZIndex = targetDepth + (transition?.zIndex ?: 0f),
+                targetContentZIndex = targetScreenZIndex,
                 sizeTransform = transition?.sizeTransform() ?: SizeTransform()
             )
         },
