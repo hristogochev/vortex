@@ -46,7 +46,10 @@ import kotlin.coroutines.cancellation.CancellationException
  *
  *  Takes in a default [ScreenTransition] for when a screen enters and leaves the visible area.
  *
- *  Each [Screen] can have it's own transition for when it enters and leaves the visible area.
+ *  [ScreenTransition.zIndex] is ignored. The incoming screen is drawn above the current one on a push or
+ *  replace, and below it on a pop or a predictive back swipe.
+ *
+ *  Each [Screen] can have its own transition for when it enters and leaves the visible area.
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
