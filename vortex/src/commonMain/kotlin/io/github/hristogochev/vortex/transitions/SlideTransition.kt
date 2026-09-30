@@ -58,7 +58,7 @@ public sealed interface SlideTransition : ScreenTransition {
     }
 
     public sealed interface Vertical : SlideTransition {
-        public data object Appear : Horizontal {
+        public data object Appear : Vertical {
             private val offsets = SlideDirection.Forward
             override fun enter(): EnterTransition =
                 slideInVertically(animationSpec, offsets.initial)
@@ -67,7 +67,7 @@ public sealed interface SlideTransition : ScreenTransition {
                 slideOutVertically(animationSpec, offsets.target)
         }
 
-        public data object Disappear : Horizontal {
+        public data object Disappear : Vertical {
             private val offsets = SlideDirection.Backward
             override fun enter(): EnterTransition =
                 slideInVertically(animationSpec, offsets.initial)

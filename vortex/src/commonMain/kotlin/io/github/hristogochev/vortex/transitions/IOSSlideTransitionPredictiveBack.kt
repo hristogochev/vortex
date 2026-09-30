@@ -10,8 +10,6 @@ import androidx.compose.animation.slideOutHorizontally
 import io.github.hristogochev.vortex.screen.ScreenTransitionPredictiveBack
 
 public data object IOSSlideTransitionPredictiveBack : ScreenTransitionPredictiveBack {
-    override val zIndex: Float? = -1f
-
     override val cancelAnimationSpec: AnimationSpec<Float> = tween(
         durationMillis = 100,
         easing = LinearEasing

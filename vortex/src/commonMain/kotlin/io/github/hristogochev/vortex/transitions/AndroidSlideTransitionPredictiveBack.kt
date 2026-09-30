@@ -130,9 +130,6 @@ public data class AndroidSlideTransitionTransitionPredictiveBack(val density: De
     ScreenTransitionPredictiveBack {
 
     @ExperimentalVortexApi
-    override val zIndex: Float? = -1f
-
-    @ExperimentalVortexApi
     override val cancelAnimationSpec: AnimationSpec<Float> = tween(
         durationMillis = 100,
         easing = LinearEasing
