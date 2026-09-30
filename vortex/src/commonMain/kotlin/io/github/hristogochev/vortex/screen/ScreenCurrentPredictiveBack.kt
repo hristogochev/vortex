@@ -194,8 +194,6 @@ public fun CurrentScreenPredictiveBack(
 
                     navigator.disassociateScreenStateKey(unexpectedScreenStateKey)
                 }
-
-                navigator.clearEvent()
             }
 
             unexpectedScreenStateKeysQueue = emptySet()
