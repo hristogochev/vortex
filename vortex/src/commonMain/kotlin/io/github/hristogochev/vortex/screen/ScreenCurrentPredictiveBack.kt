@@ -266,6 +266,10 @@ public fun CurrentScreenPredictiveBack(
         contentKey = contentKey,
         modifier = modifier
     ) { screen ->
+        // Prevent screenZIndices from growing forever
+        DisposableEffect(screen.key) {
+            onDispose { screenZIndices.remove(screen.key) }
+        }
         screen.render {
             content(it)
         }
